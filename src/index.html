@@ -269,41 +269,28 @@
             </label>
           </div>
 
-          <div class="settings-header" style="margin-top: 16px;">
-            <h3>알림 임계값 설정</h3>
-            <span class="threshold-value" id="label-threshold">20%</span>
-          </div>
-          <div class="magnetic-slider-container">
-            <div class="slider-segments" id="slider-segments">
-              <div class="segment">
-                <div class="segment-inner">
-                  <div class="segment-fill"></div>
-                </div>
-              </div>
-              <div class="segment">
-                <div class="segment-inner">
-                  <div class="segment-fill"></div>
-                </div>
-              </div>
-              <div class="segment">
-                <div class="segment-inner">
-                  <div class="segment-fill"></div>
-                </div>
-              </div>
-              <div class="segment">
-                <div class="segment-inner">
-                  <div class="segment-fill"></div>
-                </div>
-              </div>
-              <div class="segment">
-                <div class="segment-inner">
-                  <div class="segment-fill"></div>
-                </div>
-              </div>
+          <div id="container-threshold-settings" style="transition: opacity 0.4s ease, max-height 0.4s ease-in-out; overflow: hidden;">
+            <div class="settings-header" style="margin-top: 16px;">
+              <h3>알림 임계값 설정</h3>
+              <span class="threshold-value" id="label-threshold">20%</span>
             </div>
-            <input type="range" id="input-threshold" min="0" max="100" step="20" value="20" class="gradient-slider">
+            <div class="magnetic-slider-container">
+              <div class="slider-segments" id="slider-segments">
+                <div class="segment"><div class="segment-inner"><div class="segment-fill"></div></div></div>
+                <div class="segment"><div class="segment-inner"><div class="segment-fill"></div></div></div>
+                <div class="segment"><div class="segment-inner"><div class="segment-fill"></div></div></div>
+                <div class="segment"><div class="segment-inner"><div class="segment-fill"></div></div></div>
+                <div class="segment"><div class="segment-inner"><div class="segment-fill"></div></div></div>
+                <div class="segment"><div class="segment-inner"><div class="segment-fill"></div></div></div>
+                <div class="segment"><div class="segment-inner"><div class="segment-fill"></div></div></div>
+                <div class="segment"><div class="segment-inner"><div class="segment-fill"></div></div></div>
+                <div class="segment"><div class="segment-inner"><div class="segment-fill"></div></div></div>
+                <div class="segment"><div class="segment-inner"><div class="segment-fill"></div></div></div>
+              </div>
+              <input type="range" id="input-threshold" min="0" max="100" step="10" value="20" class="gradient-slider">
+            </div>
+            <p class="settings-desc">선택된 모델의 남은 할당량이 설정값 이하로 내려가면 알림을 보냅니다.</p>
           </div>
-          <p class="settings-desc">선택된 모델의 남은 할당량이 설정값 이하로 내려가면 알림을 보냅니다.</p>
         </section>
       </div>
     </div>

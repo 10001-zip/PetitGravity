@@ -14,6 +14,7 @@ const inputThreshold = document.getElementById('input-threshold');
 const labelThreshold = document.getElementById('label-threshold');
 const sliderSegments = document.getElementById('slider-segments');
 const toggleNotifications = document.getElementById('toggle-notifications');
+const containerThresholdSettings = document.getElementById('container-threshold-settings');
 const inputCheckInterval = document.getElementById('input-check-interval');
 
 const toggleAlwaysOnTop = document.getElementById('toggle-always-on-top');
@@ -85,7 +86,7 @@ function updateSliderFills(val) {
   if (!sliderSegments) return;
   const fills = sliderSegments.querySelectorAll('.segment-fill');
   fills.forEach((fill, index) => {
-    const threshold = (index + 1) * 20;
+    const threshold = (index + 1) * 10;
     fill.style.width = val >= threshold ? '100%' : '0%';
   });
 }
@@ -104,7 +105,32 @@ inputThreshold.addEventListener('change', (e) => {
 
 if (toggleNotifications) {
   toggleNotifications.addEventListener('change', (e) => {
-    window.electronAPI.updateConfig({ enableNotifications: e.target.checked });
+    const checked = e.target.checked;
+    window.electronAPI.updateConfig({ enableNotifications: checked });
+    if (containerThresholdSettings) {
+      if (checked) {
+        containerThresholdSettings.style.opacity = '1';
+        containerThresholdSettings.style.maxHeight = '200px';
+        containerThresholdSettings.style.pointerEvents = 'auto';
+        
+        const scrollContainer = containerThresholdSettings.closest('.modal-account-list');
+        if (scrollContainer) {
+          const startTime = performance.now();
+          const duration = 450;
+          function syncScroll(currentTime) {
+            scrollContainer.scrollTop = scrollContainer.scrollHeight;
+            if (currentTime - startTime < duration) {
+              requestAnimationFrame(syncScroll);
+            }
+          }
+          requestAnimationFrame(syncScroll);
+        }
+      } else {
+        containerThresholdSettings.style.opacity = '0';
+        containerThresholdSettings.style.maxHeight = '0px';
+        containerThresholdSettings.style.pointerEvents = 'none';
+      }
+    }
   });
 }
 
@@ -317,7 +343,19 @@ window.electronAPI.onAccountStatus((data) => {
 
   // 토글 동기화
   if (toggleNotifications) {
-    toggleNotifications.checked = currentConfig.enableNotifications !== false;
+    const isEnabled = currentConfig.enableNotifications !== false;
+    toggleNotifications.checked = isEnabled;
+    if (containerThresholdSettings) {
+      if (isEnabled) {
+        containerThresholdSettings.style.opacity = '1';
+        containerThresholdSettings.style.maxHeight = '200px';
+        containerThresholdSettings.style.pointerEvents = 'auto';
+      } else {
+        containerThresholdSettings.style.opacity = '0';
+        containerThresholdSettings.style.maxHeight = '0px';
+        containerThresholdSettings.style.pointerEvents = 'none';
+      }
+    }
   }
   
   if (inputCheckInterval) {
