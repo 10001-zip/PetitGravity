@@ -899,6 +899,13 @@ if (btnUpdateLater) {
   });
 }
 
+const btnCloseUpdateModal = document.getElementById('btn-close-update-modal');
+if (btnCloseUpdateModal) {
+  btnCloseUpdateModal.addEventListener('click', () => {
+    updateModalOverlay.classList.remove('active');
+  });
+}
+
 if (btnUpdateNow) {
   btnUpdateNow.addEventListener('click', () => {
     btnUpdateNow.textContent = '설치 중...';

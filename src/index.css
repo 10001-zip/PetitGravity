@@ -972,6 +972,59 @@ input:checked+.toggle-slider:before {
   animation: spin 0.8s linear infinite;
 }
 
+.primary-btn {
+  background: var(--text-primary);
+  border: 1px solid var(--text-primary);
+  color: #ffffff;
+  height: 32px;
+  padding: 0 16px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 600;
+  transition: var(--transition-smooth);
+}
+
+.primary-btn:hover {
+  background: #555555;
+  border-color: #555555;
+}
+
+.primary-btn:active {
+  background: #222222;
+  border-color: #222222;
+}
+
+.secondary-btn {
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text-secondary);
+  height: 32px;
+  padding: 0 16px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 500;
+  transition: var(--transition-smooth);
+}
+
+.secondary-btn:hover {
+  background: #e5e5e5;
+  color: var(--text-primary);
+}
+
+.secondary-btn:active {
+  background: #d4d4d4;
+}
+
 /* 정렬 컨텍스트 메뉴 스타일 */
 .sort-context-menu {
   position: absolute;

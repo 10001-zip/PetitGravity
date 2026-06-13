@@ -349,21 +349,41 @@
 
   <!-- 업데이트 모달 -->
   <div class="modal-overlay" id="update-modal-overlay">
-    <div class="modal-container" id="update-modal-container" style="max-width: 320px;">
-      <div class="modal-header" style="border-bottom: none; justify-content: center; padding-top: 24px;">
-        <div style="font-family: var(--font-title); font-size: 20px; font-weight: 700; color: #10b981;">새로운 업데이트 🎉
+    <div class="modal-container" id="update-modal-container"
+      style="max-width: 320px; height: auto; min-height: unset; background: var(--card-bg); box-shadow: 0 10px 25px rgba(0,0,0,0.1); border: 1px solid var(--border-color);">
+      <div class="modal-header" style="border-bottom: none; padding: 16px 16px 8px 16px;">
+        <div
+          style="flex: 1; font-family: var(--font-title); font-size: 15px; font-weight: 700; color: var(--text-primary); display: flex; align-items: center; gap: 6px;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="7 10 12 15 17 10"></polyline>
+            <line x1="12" y1="15" x2="12" y2="3"></line>
+          </svg>
+          업데이트 알림
+        </div>
+        <div class="modal-actions">
+          <button class="modal-action-btn" id="btn-close-update-modal" title="닫기"
+            style="width: 28px; height: 28px; border: none; padding: 0;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round">
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
         </div>
       </div>
-      <div
-        style="padding: 16px 24px; text-align: center; color: var(--text-primary); font-size: 14px; line-height: 1.5;">
-        최신 버전의 다운로드가 완료되었습니다.<br>지금 설치하시겠습니까?
-      </div>
-      <div style="display: flex; gap: 12px; padding: 16px 24px 24px 24px; justify-content: center;">
-        <button id="btn-update-later" class="custom-action-btn"
-          style="padding: 8px 16px; border-radius: 6px; width: auto; font-weight: 500;">나중에 알림</button>
-        <button id="btn-update-now" class="custom-action-btn"
-          style="padding: 8px 16px; border-radius: 6px; width: auto; background-color: #10b981; color: white; border: none; font-weight: 600;">지금
-          설치</button>
+      <div style="padding: 8px 16px 20px 16px; display: flex; flex-direction: column; gap: 16px;">
+        <div style="display: flex; flex-direction: column; gap: 4px;">
+          <div style="font-family: var(--font-title); font-size: 14px; font-weight: 600; color: var(--text-primary);">
+            새로운 버전이 출시되었습니다.</div>
+          <div style="color: var(--text-secondary); font-size: 12px; line-height: 1.5;">지금 설치하고
+            앱을 다시 시작하시겠습니까?</div>
+        </div>
+        <div style="display: flex; gap: 8px; justify-content: flex-end; margin-top: 4px;">
+          <button id="btn-update-later" class="secondary-btn">나중에</button>
+          <button id="btn-update-now" class="primary-btn">지금 설치</button>
+        </div>
       </div>
     </div>
   </div>
