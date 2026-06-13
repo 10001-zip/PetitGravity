@@ -1268,6 +1268,12 @@ if (!gotTheLock) {
       });
     }
 
+    autoUpdater.on('update-available', () => {
+      if (mainWindow) {
+        mainWindow.webContents.send('update-downloading');
+      }
+    });
+
     autoUpdater.on('update-downloaded', (info) => {
       if (mainWindow) {
         mainWindow.webContents.send('update-ready');

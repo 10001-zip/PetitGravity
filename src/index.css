@@ -838,6 +838,12 @@ input:checked+.toggle-slider:before {
   border: 1px solid #fef08a;
 }
 
+.modal-snackbar.info {
+  background: #eff6ff;
+  color: #1e3a8a;
+  border: 1px solid #bfdbfe;
+}
+
 @keyframes snackbarSlideIn {
   from {
     transform: translateY(-10px);

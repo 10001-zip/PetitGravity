@@ -881,15 +881,21 @@ const updateModalOverlay = document.getElementById('update-modal-overlay');
 const btnUpdateLater = document.getElementById('btn-update-later');
 const btnUpdateNow = document.getElementById('btn-update-now');
 
+if (window.electronAPI.onUpdateDownloading) {
+  window.electronAPI.onUpdateDownloading(() => {
+    showSnackbar('새 버전 업데이트를 백그라운드에서 다운로드 중입니다. 잠시만 기다려주세요...', 'info');
+  });
+}
+
 if (window.electronAPI.onUpdateReady) {
   window.electronAPI.onUpdateReady(() => {
-    if (updateModalOverlay) updateModalOverlay.classList.add('show');
+    if (updateModalOverlay) updateModalOverlay.classList.add('active');
   });
 }
 
 if (btnUpdateLater) {
   btnUpdateLater.addEventListener('click', () => {
-    updateModalOverlay.classList.remove('show');
+    updateModalOverlay.classList.remove('active');
   });
 }
 
