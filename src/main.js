@@ -365,9 +365,6 @@ async function fetchQuotaData(accessToken, projectId) {
         if (response.ok) {
           const data = await response.json();
           if (data.models) {
-            console.log("=== RAW QUOTA API RESPONSE ===");
-            console.log(JSON.stringify(data.models, null, 2));
-            console.log("==============================");
             return data.models;
           }
         } else {
