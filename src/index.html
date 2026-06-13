@@ -49,7 +49,7 @@
           <rect x="2" y="5.5" width="8" height="1" fill="currentColor" />
         </svg>
       </button>
-      <button class="control-btn" id="btn-close" title="닫기 (트레이 최소화)">
+      <button class="control-btn" id="btn-close" title="닫기">
         <svg width="12" height="12" viewBox="0 0 12 12">
           <path d="M2.5 2.5 L9.5 9.5 M9.5 2.5 L2.5 9.5" stroke="currentColor" stroke-width="1.2" fill="none" />
         </svg>
@@ -175,9 +175,11 @@
     <div class="modal-container" id="settings-modal-container">
       <!-- 모달 헤더 -->
       <div class="modal-header" style="border-bottom: none;">
-        <div style="flex: 1; font-family: var(--font-title); font-size: 18px; font-weight: 700; padding-left: 8px; display: flex; align-items: baseline; gap: 8px;">
+        <div
+          style="flex: 1; font-family: var(--font-title); font-size: 18px; font-weight: 700; padding-left: 8px; display: flex; align-items: baseline; gap: 8px;">
           설정
-          <span id="app-version-display" style="font-size: 12px; font-weight: 400; color: var(--text-secondary); opacity: 0.7;"></span>
+          <span id="app-version-display"
+            style="font-size: 12px; font-weight: 400; color: var(--text-secondary); opacity: 0.7;"></span>
         </div>
         <div class="modal-actions">
           <button class="modal-action-btn" id="btn-close-settings-modal" title="닫기(esc)">
@@ -259,6 +261,14 @@
             </label>
           </div>
 
+          <div class="settings-header" style="margin-top: 16px;">
+            <h3>창 닫기 시 트레이로 최소화</h3>
+            <label class="toggle-switch">
+              <input type="checkbox" id="toggle-minimize-on-close" checked>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
           <div class="settings-section-title" style="margin-top: 24px;">알림</div>
 
           <div class="settings-header" style="margin-top: 4px;">
@@ -269,23 +279,64 @@
             </label>
           </div>
 
-          <div id="container-threshold-settings" style="transition: opacity 0.4s ease, max-height 0.4s ease-in-out; overflow: hidden;">
+          <div id="container-threshold-settings"
+            style="transition: opacity 0.4s ease, max-height 0.4s ease-in-out; overflow: hidden;">
             <div class="settings-header" style="margin-top: 16px;">
               <h3>알림 임계값 설정</h3>
               <span class="threshold-value" id="label-threshold">20%</span>
             </div>
             <div class="magnetic-slider-container">
               <div class="slider-segments" id="slider-segments">
-                <div class="segment"><div class="segment-inner"><div class="segment-fill"></div></div></div>
-                <div class="segment"><div class="segment-inner"><div class="segment-fill"></div></div></div>
-                <div class="segment"><div class="segment-inner"><div class="segment-fill"></div></div></div>
-                <div class="segment"><div class="segment-inner"><div class="segment-fill"></div></div></div>
-                <div class="segment"><div class="segment-inner"><div class="segment-fill"></div></div></div>
-                <div class="segment"><div class="segment-inner"><div class="segment-fill"></div></div></div>
-                <div class="segment"><div class="segment-inner"><div class="segment-fill"></div></div></div>
-                <div class="segment"><div class="segment-inner"><div class="segment-fill"></div></div></div>
-                <div class="segment"><div class="segment-inner"><div class="segment-fill"></div></div></div>
-                <div class="segment"><div class="segment-inner"><div class="segment-fill"></div></div></div>
+                <div class="segment">
+                  <div class="segment-inner">
+                    <div class="segment-fill"></div>
+                  </div>
+                </div>
+                <div class="segment">
+                  <div class="segment-inner">
+                    <div class="segment-fill"></div>
+                  </div>
+                </div>
+                <div class="segment">
+                  <div class="segment-inner">
+                    <div class="segment-fill"></div>
+                  </div>
+                </div>
+                <div class="segment">
+                  <div class="segment-inner">
+                    <div class="segment-fill"></div>
+                  </div>
+                </div>
+                <div class="segment">
+                  <div class="segment-inner">
+                    <div class="segment-fill"></div>
+                  </div>
+                </div>
+                <div class="segment">
+                  <div class="segment-inner">
+                    <div class="segment-fill"></div>
+                  </div>
+                </div>
+                <div class="segment">
+                  <div class="segment-inner">
+                    <div class="segment-fill"></div>
+                  </div>
+                </div>
+                <div class="segment">
+                  <div class="segment-inner">
+                    <div class="segment-fill"></div>
+                  </div>
+                </div>
+                <div class="segment">
+                  <div class="segment-inner">
+                    <div class="segment-fill"></div>
+                  </div>
+                </div>
+                <div class="segment">
+                  <div class="segment-inner">
+                    <div class="segment-fill"></div>
+                  </div>
+                </div>
               </div>
               <input type="range" id="input-threshold" min="0" max="100" step="10" value="20" class="gradient-slider">
             </div>
@@ -300,14 +351,19 @@
   <div class="modal-overlay" id="update-modal-overlay">
     <div class="modal-container" id="update-modal-container" style="max-width: 320px;">
       <div class="modal-header" style="border-bottom: none; justify-content: center; padding-top: 24px;">
-        <div style="font-family: var(--font-title); font-size: 20px; font-weight: 700; color: #10b981;">새로운 업데이트 🎉</div>
+        <div style="font-family: var(--font-title); font-size: 20px; font-weight: 700; color: #10b981;">새로운 업데이트 🎉
+        </div>
       </div>
-      <div style="padding: 16px 24px; text-align: center; color: var(--text-primary); font-size: 14px; line-height: 1.5;">
+      <div
+        style="padding: 16px 24px; text-align: center; color: var(--text-primary); font-size: 14px; line-height: 1.5;">
         최신 버전의 다운로드가 완료되었습니다.<br>지금 설치하시겠습니까?
       </div>
       <div style="display: flex; gap: 12px; padding: 16px 24px 24px 24px; justify-content: center;">
-        <button id="btn-update-later" class="custom-action-btn" style="padding: 8px 16px; border-radius: 6px; width: auto; font-weight: 500;">나중에 알림</button>
-        <button id="btn-update-now" class="custom-action-btn" style="padding: 8px 16px; border-radius: 6px; width: auto; background-color: #10b981; color: white; border: none; font-weight: 600;">지금 설치</button>
+        <button id="btn-update-later" class="custom-action-btn"
+          style="padding: 8px 16px; border-radius: 6px; width: auto; font-weight: 500;">나중에 알림</button>
+        <button id="btn-update-now" class="custom-action-btn"
+          style="padding: 8px 16px; border-radius: 6px; width: auto; background-color: #10b981; color: white; border: none; font-weight: 600;">지금
+          설치</button>
       </div>
     </div>
   </div>

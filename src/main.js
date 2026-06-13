@@ -8,7 +8,7 @@ const { URL } = require('url');
 
 try {
   require('electron-reload')(__dirname, {
-    electron: path.join(__dirname, '..', 'node_modules', '.bin', 'electron')
+    electron: path.join(__dirname, '..', 'node_modules', '.bin', 'electron' + (process.platform === 'win32' ? '.cmd' : ''))
   });
 } catch (_) { }
 
@@ -873,12 +873,20 @@ function createWindow(startHidden = false) {
     }
   });
 
-  // 창 닫기 이벤트 가로채기 (트레이 최소화)
+  // 창 닫기 이벤트 가로채기 (트레이 최소화 또는 앱 종료)
   mainWindow.on('close', (event) => {
     saveWindowState();
     if (!isQuitting) {
-      event.preventDefault();
-      mainWindow.hide();
+      const accountConfig = config.global || {};
+      if (accountConfig.minimizeOnClose !== false) {
+        event.preventDefault();
+        mainWindow.hide();
+      } else {
+        // 트레이 최소화가 꺼져있다면 앱을 완전히 종료합니다.
+        isQuitting = true;
+        // event.preventDefault()를 호출하지 않고 정상적으로 창이 닫히도록 둡니다.
+        // 창이 완전히 닫힌 후 window-all-closed 이벤트에서 app.quit()가 호출됩니다.
+      }
     }
   });
 }
@@ -1053,7 +1061,7 @@ function registerSnapHandlers(win) {
 // IPC 통신 이벤트 등록
 function registerIpcEvents() {
   // UI로부터 설정 변경 수신
-  ipcMain.on('update-config', (event, { checkInterval, modelName, isMonitored, threshold, models, enableNotifications, alwaysOnTop, runAtStartup, startMinimized, enableWindowSnap, enableSnapping }) => {
+  ipcMain.on('update-config', (event, { checkInterval, modelName, isMonitored, threshold, models, enableNotifications, alwaysOnTop, runAtStartup, startMinimized, enableWindowSnap, enableSnapping, minimizeOnClose }) => {
     if (!config.global) {
       config.global = { alertThreshold: 20, alertModels: {}, enableNotifications: true, enableWindowSnap: true, enableSnapping: true, checkInterval: 1 };
     }
@@ -1110,6 +1118,10 @@ function registerIpcEvents() {
       accountConfig.enableSnapping = enableSnapping;
     }
 
+    if (minimizeOnClose !== undefined) {
+      accountConfig.minimizeOnClose = minimizeOnClose;
+    }
+
     if (models && Array.isArray(models)) {
       models.forEach(m => {
         accountConfig.alertModels[m.modelName] = m.isMonitored;
@@ -1135,7 +1147,7 @@ function registerIpcEvents() {
   });
 
   ipcMain.on('window-close', () => {
-    if (mainWindow) mainWindow.hide(); // 시스템 트레이로 숨김
+    if (mainWindow) mainWindow.close(); // close 이벤트를 트리거하여 로직을 타게 함
   });
 
   // 안티그래비티 런처
@@ -1290,9 +1302,11 @@ if (!gotTheLock) {
     credentialCheckInterval = setInterval(checkAndUpdateQuota, initialInterval);
   });
 
-  // 모든 창이 닫혀도 앱 종료 방지
+  // 모든 창이 닫혀도 앱 종료 방지 (명시적 종료가 아닐 경우만)
   app.on('window-all-closed', () => {
-    if (process.platform !== 'darwin') {
+    if (isQuitting) {
+      app.quit();
+    } else if (process.platform !== 'darwin') {
       // 트레이에서 구동되므로 종료하지 않음
     }
   });

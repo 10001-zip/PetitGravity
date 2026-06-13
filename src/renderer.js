@@ -23,6 +23,7 @@ const toggleStartMinimized = document.getElementById('toggle-start-minimized');
 const containerStartMinimized = document.getElementById('container-start-minimized');
 const toggleWindowSnapping = document.getElementById('toggle-window-snapping');
 const toggleWindowSnap = document.getElementById('toggle-window-snap');
+const toggleMinimizeOnClose = document.getElementById('toggle-minimize-on-close');
 
 // 앱 버전 표시
 if (window.electronAPI.getAppVersion) {
@@ -204,6 +205,13 @@ if (toggleWindowSnap) {
   });
 }
 
+if (toggleMinimizeOnClose) {
+  toggleMinimizeOnClose.addEventListener('change', (e) => {
+    currentConfig.minimizeOnClose = e.target.checked;
+    window.electronAPI.updateConfig({ minimizeOnClose: e.target.checked });
+  });
+}
+
 // 글로벌 단축키 (Ctrl + P)
 document.addEventListener('keydown', (e) => {
   if (e.ctrlKey && e.key.toLowerCase() === 'p') {
@@ -367,6 +375,7 @@ window.electronAPI.onAccountStatus((data) => {
   if (toggleRunAtStartup) toggleRunAtStartup.checked = !!currentConfig.runAtStartup;
   if (toggleStartMinimized) toggleStartMinimized.checked = !!currentConfig.startMinimized;
   if (toggleWindowSnap) toggleWindowSnap.checked = currentConfig.enableWindowSnap !== false;
+  if (toggleMinimizeOnClose) toggleMinimizeOnClose.checked = currentConfig.minimizeOnClose !== false;
   updateStartMinimizedUI();
 
   // 슬라이더 값 동기화
