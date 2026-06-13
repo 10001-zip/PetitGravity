@@ -36,6 +36,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   switchAccount: (email) => ipcRenderer.invoke('switch-account', email),
   reorderAccounts: (orderedEmails) => ipcRenderer.invoke('reorder-accounts', orderedEmails),
   fetchAllQuotas: () => ipcRenderer.invoke('fetch-all-quotas'),
+  getAppVersion: () => ipcRenderer.invoke('get-app-version'),
+  onUpdateReady: (callback) => ipcRenderer.on('update-ready', callback),
+  installUpdate: () => ipcRenderer.send('install-update'),
 
   // === Window Snapping ===
   snapTopLeft: () => ipcRenderer.send('snap-top-left'),

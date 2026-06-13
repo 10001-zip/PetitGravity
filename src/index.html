@@ -175,7 +175,9 @@
     <div class="modal-container" id="settings-modal-container">
       <!-- 모달 헤더 -->
       <div class="modal-header" style="border-bottom: none;">
-        <div style="flex: 1; font-family: var(--font-title); font-size: 18px; font-weight: 700; padding-left: 8px;">설정
+        <div style="flex: 1; font-family: var(--font-title); font-size: 18px; font-weight: 700; padding-left: 8px; display: flex; align-items: baseline; gap: 8px;">
+          설정
+          <span id="app-version-display" style="font-size: 12px; font-weight: 400; color: var(--text-secondary); opacity: 0.7;"></span>
         </div>
         <div class="modal-actions">
           <button class="modal-action-btn" id="btn-close-settings-modal" title="닫기(esc)">
@@ -303,6 +305,22 @@
           </div>
           <p class="settings-desc">선택된 모델의 남은 할당량이 설정값 이하로 내려가면 알림을 보냅니다.</p>
         </section>
+      </div>
+    </div>
+  </div>
+
+  <!-- 업데이트 모달 -->
+  <div class="modal-overlay" id="update-modal-overlay">
+    <div class="modal-container" id="update-modal-container" style="max-width: 320px;">
+      <div class="modal-header" style="border-bottom: none; justify-content: center; padding-top: 24px;">
+        <div style="font-family: var(--font-title); font-size: 20px; font-weight: 700; color: #10b981;">새로운 업데이트 🎉</div>
+      </div>
+      <div style="padding: 16px 24px; text-align: center; color: var(--text-primary); font-size: 14px; line-height: 1.5;">
+        최신 버전의 다운로드가 완료되었습니다.<br>지금 설치하시겠습니까?
+      </div>
+      <div style="display: flex; gap: 12px; padding: 16px 24px 24px 24px; justify-content: center;">
+        <button id="btn-update-later" class="custom-action-btn" style="padding: 8px 16px; border-radius: 6px; width: auto; font-weight: 500;">나중에 알림</button>
+        <button id="btn-update-now" class="custom-action-btn" style="padding: 8px 16px; border-radius: 6px; width: auto; background-color: #10b981; color: white; border: none; font-weight: 600;">지금 설치</button>
       </div>
     </div>
   </div>

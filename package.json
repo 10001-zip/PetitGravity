@@ -1,6 +1,6 @@
 {
   "name": "petitgravity",
-  "version": "0.1.0",
+  "version": "0.1.2",
   "description": "Antigravity 2 Desktop app Quota monitor and notifier",
   "main": "src/main.js",
   "scripts": {
@@ -22,9 +22,16 @@
     "nodemon": "^3.1.14"
   },
   "build": {
+    "files": [
+      "src/**/*",
+      "package.json",
+      "logo1_rounded.ico",
+      "logo_rounded.png"
+    ],
     "directories": {
-      "output": "release/${version}"
+      "output": "dist-electron"
     },
+    "artifactName": "${name}-Setup-${version}.${ext}",
     "appId": "com.antigravity.quotamonitor",
     "asarUnpack": [
       "src/helpers/**/*.ps1"

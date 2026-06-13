@@ -35,7 +35,35 @@ rl.question(`현재 버전은 ${currentVersion} 입니다. 바로 빌드하려�
 
   builder.on('close', (code) => {
     if (code === 0) {
-      console.log(`빌드가 완료되었습니다. release/${pkg.version} 폴더를 확인해주세요.`);
+      try {
+        const buildDir = path.join(__dirname, '..', 'dist-electron');
+        const releaseDir = path.join(__dirname, '..', 'release');
+        const versionDir = path.join(releaseDir, pkg.version);
+        
+        if (!fs.existsSync(releaseDir)) {
+          fs.mkdirSync(releaseDir, { recursive: true });
+        }
+        if (!fs.existsSync(versionDir)) {
+          fs.mkdirSync(versionDir, { recursive: true });
+        }
+        
+        const filesToMove = [
+          `petitgravity-Setup-${pkg.version}.exe`,
+          `latest.yml`
+        ];
+
+        filesToMove.forEach(file => {
+          const oldPath = path.join(buildDir, file);
+          const newPath = path.join(versionDir, file);
+          if (fs.existsSync(oldPath)) {
+            fs.copyFileSync(oldPath, newPath);
+          }
+        });
+
+        console.log(`빌드가 완료되었습니다. release/${pkg.version} 폴더를 확인해주세요.`);
+      } catch (err) {
+        console.error('빌드는 성공했으나 파일 이동 중 오류가 발생했습니다:', err);
+      }
     } else {
       console.error(`빌드 중 오류가 발생했습니다. (Exit code: ${code})`);
     }

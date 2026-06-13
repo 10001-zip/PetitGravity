@@ -23,6 +23,14 @@ const containerStartMinimized = document.getElementById('container-start-minimiz
 const toggleWindowSnapping = document.getElementById('toggle-window-snapping');
 const toggleWindowSnap = document.getElementById('toggle-window-snap');
 
+// 앱 버전 표시
+if (window.electronAPI.getAppVersion) {
+  window.electronAPI.getAppVersion().then(version => {
+    const el = document.getElementById('app-version-display');
+    if (el) el.textContent = `v${version}`;
+  });
+}
+
 // UI 로컬 상태
 let currentQuotas = [];
 let currentConfig = { alertThreshold: 20, alertModels: {}, enableNotifications: true };
@@ -820,3 +828,29 @@ const handleKeyUp = (e) => {
 
 window.addEventListener('keydown', handleKeyDown);
 window.addEventListener('keyup', handleKeyUp);
+
+// 앱 업데이트 모달 컨트롤
+const updateModalOverlay = document.getElementById('update-modal-overlay');
+const btnUpdateLater = document.getElementById('btn-update-later');
+const btnUpdateNow = document.getElementById('btn-update-now');
+
+if (window.electronAPI.onUpdateReady) {
+  window.electronAPI.onUpdateReady(() => {
+    if (updateModalOverlay) updateModalOverlay.classList.add('show');
+  });
+}
+
+if (btnUpdateLater) {
+  btnUpdateLater.addEventListener('click', () => {
+    updateModalOverlay.classList.remove('show');
+  });
+}
+
+if (btnUpdateNow) {
+  btnUpdateNow.addEventListener('click', () => {
+    btnUpdateNow.textContent = '설치 중...';
+    btnUpdateNow.style.opacity = '0.7';
+    btnUpdateNow.disabled = true;
+    window.electronAPI.installUpdate();
+  });
+}

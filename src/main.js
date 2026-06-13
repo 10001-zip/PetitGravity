@@ -1218,6 +1218,12 @@ function registerIpcEvents() {
     const results = await Promise.all(accounts.map(a => fetchQuotaForAccount(a)));
     return results;
   });
+
+  ipcMain.handle('get-app-version', () => app.getVersion());
+
+  ipcMain.on('install-update', () => {
+    autoUpdater.quitAndInstall();
+  });
 }
 
 const gotTheLock = app.requestSingleInstanceLock();
@@ -1245,21 +1251,15 @@ if (!gotTheLock) {
     if (!app.isPackaged) {
       console.log('개발 모드에서는 자동 업데이트를 확인하지 않습니다.');
     } else {
-      autoUpdater.checkForUpdatesAndNotify();
+      autoUpdater.checkForUpdatesAndNotify().catch(err => {
+        console.error('업데이트 체크 오류:', err);
+      });
     }
 
     autoUpdater.on('update-downloaded', (info) => {
-      dialog.showMessageBox({
-        type: 'info',
-        title: '업데이트 알림',
-        message: '새 버전이 출시되었습니다. 지금 설치하시겠습니까? 창이 다시 열립니다.',
-        buttons: ['나중에 다시 알림', '지금 설치'],
-        defaultId: 1
-      }).then((result) => {
-        if (result.response === 1) {
-          autoUpdater.quitAndInstall();
-        }
-      });
+      if (mainWindow) {
+        mainWindow.webContents.send('update-ready');
+      }
     });
 
     // 에셋 및 임시 플레이스홀더 아이콘 생성
