@@ -1,12 +1,12 @@
 {
   "name": "petitgravity",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "Antigravity 2 Desktop app Quota monitor and notifier",
   "main": "src/main.js",
   "scripts": {
     "start": "electron .",
     "dev": "electron .",
-    "build": "electron-builder"
+    "build": "node scripts/build.js"
   },
   "keywords": [
     "antigravity",
@@ -22,11 +22,20 @@
     "nodemon": "^3.1.14"
   },
   "build": {
+    "directories": {
+      "output": "release/${version}"
+    },
     "appId": "com.antigravity.quotamonitor",
     "asarUnpack": [
       "src/helpers/**/*.ps1"
     ],
-    "publish": null,
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "10001-zip",
+        "repo": "PetitGravity"
+      }
+    ],
     "win": {
       "target": "nsis",
       "icon": "logo1_rounded.ico"
@@ -45,6 +54,7 @@
     }
   },
   "dependencies": {
+    "electron-updater": "^6.8.9",
     "sortablejs": "^1.15.7",
     "sql.js": "^1.14.1"
   }

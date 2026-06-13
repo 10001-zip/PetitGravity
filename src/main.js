@@ -1,4 +1,5 @@
-const { app, BrowserWindow, Tray, Menu, ipcMain, Notification, shell, screen } = require('electron');
+const { app, BrowserWindow, Tray, Menu, ipcMain, Notification, shell, screen, dialog } = require('electron');
+const { autoUpdater } = require('electron-updater');
 const path = require('path');
 const fs = require('fs');
 const { exec } = require('child_process');
@@ -1236,6 +1237,30 @@ if (!gotTheLock) {
   app.whenReady().then(() => {
     loadConfig();
     loadAccounts();
+
+    // 자동 업데이트 설정
+    autoUpdater.autoDownload = true;
+    
+    // 개발 모드가 아닐 때만 업데이트 체크
+    if (!app.isPackaged) {
+      console.log('개발 모드에서는 자동 업데이트를 확인하지 않습니다.');
+    } else {
+      autoUpdater.checkForUpdatesAndNotify();
+    }
+
+    autoUpdater.on('update-downloaded', (info) => {
+      dialog.showMessageBox({
+        type: 'info',
+        title: '업데이트 알림',
+        message: '새 버전이 출시되었습니다. 지금 설치하시겠습니까? 창이 다시 열립니다.',
+        buttons: ['나중에 다시 알림', '지금 설치'],
+        defaultId: 1
+      }).then((result) => {
+        if (result.response === 1) {
+          autoUpdater.quitAndInstall();
+        }
+      });
+    });
 
     // 에셋 및 임시 플레이스홀더 아이콘 생성
     const assetsDir = path.join(__dirname, 'assets');
