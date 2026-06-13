@@ -307,7 +307,7 @@ function renderModels() {
           <span class="model-name" title="${model.name}">${model.displayName}</span>
         </div>
         <div class="model-pct-wrapper" style="display: flex; align-items: center; gap: 8px;">
-          ${refreshText ? `<span class="model-refresh-info" style="font-size: 11px; color: #888;">${refreshText}</span>` : ''}
+          ${refreshText ? `<span class="model-refresh-info" style="font-size: 11px; color: #888; white-space: nowrap;">${refreshText}</span>` : ''}
           <span class="model-pct">${model.percentage}%</span>
         </div>
       </div>
@@ -419,6 +419,9 @@ const snackbarClose = document.getElementById('snackbar-close');
 const btnSortAccounts = document.getElementById('btn-sort-accounts');
 const sortContextMenu = document.getElementById('sort-context-menu');
 
+const iconEdit = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>`;
+const iconCheck = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
+
 let modalEditMode = false;
 let currentSortMode = 'default'; // 'default', 'asc', 'desc', 'tokens-high', 'tokens-low'
 let allAccountQuotas = {};
@@ -426,7 +429,8 @@ let sortableInstance = null;
 
 function openAccountModal() {
   modalEditMode = false;
-  btnEditAccounts.querySelector('span').textContent = '편집';
+  btnEditAccounts.innerHTML = iconEdit;
+  btnEditAccounts.title = '편집';
   btnAddAccount.style.display = '';
   modalSearch.value = '';
   btnSearchClear.style.display = 'none';
@@ -548,8 +552,10 @@ function renderAccountList(accounts) {
         const pctClass = getPctColorClass(q.percentage);
         modelsHtml += '<div class="account-model-item">' +
           '<span class="account-model-name" title="' + q.name + '">' + q.displayName + '</span>' +
+          '<div class="account-model-stats">' +
           (refreshText ? '<span class="account-model-reset">' + refreshText + '</span>' : '') +
           '<span class="account-model-pct ' + pctClass + '">' + q.percentage + '%</span>' +
+          '</div>' +
           '</div>';
       });
       modelsHtml += '</div>';
@@ -717,10 +723,12 @@ btnAddAccount.addEventListener('click', async () => {
 btnEditAccounts.addEventListener('click', async () => {
   modalEditMode = !modalEditMode;
   if (modalEditMode) {
-    btnEditAccounts.querySelector('span').textContent = '완료';
+    btnEditAccounts.innerHTML = iconCheck;
+    btnEditAccounts.title = '완료';
     btnAddAccount.style.display = 'none';
   } else {
-    btnEditAccounts.querySelector('span').textContent = '편집';
+    btnEditAccounts.innerHTML = iconEdit;
+    btnEditAccounts.title = '편집';
     btnAddAccount.style.display = '';
     destroySortable();
   }
