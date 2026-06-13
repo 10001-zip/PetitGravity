@@ -1048,6 +1048,15 @@ input:checked+.toggle-slider:before {
   display: flex;
   flex-direction: column;
   gap: 6px;
+  /* 컨텐츠 영역은 위아래 그라데이션, 스크롤바 영역(우측 8px)은 투명도 없이 설정 */
+  -webkit-mask-image: linear-gradient(to bottom, transparent, black 16px, black calc(100% - 16px), transparent), linear-gradient(to bottom, black, black);
+  -webkit-mask-size: calc(100% - 8px) 100%, 8px 100%;
+  -webkit-mask-position: left top, right top;
+  -webkit-mask-repeat: no-repeat;
+  mask-image: linear-gradient(to bottom, transparent, black 16px, black calc(100% - 16px), transparent), linear-gradient(to bottom, black, black);
+  mask-size: calc(100% - 8px) 100%, 8px 100%;
+  mask-position: left top, right top;
+  mask-repeat: no-repeat;
 }
 
 .modal-account-list::-webkit-scrollbar {
