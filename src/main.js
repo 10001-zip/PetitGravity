@@ -733,12 +733,12 @@ function createWindow(startHidden = false) {
   const bounds = config.windowBounds || {};
 
   mainWindow = new BrowserWindow({
-    width: bounds.width || 440,
-    height: bounds.height || 680,
+    width: bounds.width || 262,
+    height: bounds.height || 281,
     x: bounds.x,
     y: bounds.y,
-    minWidth: 250,
-    minHeight: 250,
+    minWidth: 262,
+    minHeight: 281,
     resizable: true,
     frame: false, // 프리미엄 룩을 위해 타이틀바 프레임 제거
     show: false,
