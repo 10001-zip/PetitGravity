@@ -423,9 +423,9 @@ const iconEdit = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" st
 const iconCheck = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
 
 let modalEditMode = false;
-let currentSortMode = 'default'; // 'default', 'asc', 'desc', 'tokens-high', 'tokens-low'
+let currentSortMode = 'default';
 let allAccountQuotas = {};
-let sortableInstance = null;
+let isAnimating = false;
 
 function openAccountModal() {
   modalEditMode = false;
@@ -450,7 +450,6 @@ function closeAccountModal() {
   }, 250);
   if (modalEditMode) {
     modalEditMode = false;
-    destroySortable();
   }
 }
 
@@ -580,10 +579,6 @@ function renderAccountList(accounts) {
 
     item.innerHTML = '<div class="account-item-header">' +
       '<div class="account-item-left">' +
-      '<div class="drag-handle"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">' +
-      '<circle cx="9" cy="6" r="1.5"/><circle cx="15" cy="6" r="1.5"/>' +
-      '<circle cx="9" cy="12" r="1.5"/><circle cx="15" cy="12" r="1.5"/>' +
-      '<circle cx="9" cy="18" r="1.5"/><circle cx="15" cy="18" r="1.5"/></svg></div>' +
       '<span class="account-item-email">' + account.email + '</span>' +
       '</div>' + actionBtn + '</div>' + modelsHtml;
 
@@ -603,9 +598,7 @@ function renderAccountList(accounts) {
         }
       });
     });
-    initSortable();
   } else {
-    destroySortable();
     modalAccountList.querySelectorAll('.switch-action-btn').forEach(btn => {
       btn.addEventListener('click', async (e) => {
         const email = e.currentTarget.dataset.email;
@@ -629,30 +622,6 @@ function renderAccountList(accounts) {
         }
       });
     });
-  }
-}
-
-function initSortable() {
-  destroySortable();
-  if (typeof Sortable !== 'undefined') {
-    sortableInstance = Sortable.create(modalAccountList, {
-      animation: 150,
-      handle: '.drag-handle',
-      ghostClass: 'sortable-ghost',
-      dragClass: 'sortable-drag',
-      onEnd: async () => {
-        const items = modalAccountList.querySelectorAll('.account-item');
-        const orderedEmails = Array.from(items).map(item => item.dataset.email);
-        await window.electronAPI.reorderAccounts(orderedEmails);
-      }
-    });
-  }
-}
-
-function destroySortable() {
-  if (sortableInstance) {
-    sortableInstance.destroy();
-    sortableInstance = null;
   }
 }
 
@@ -730,7 +699,6 @@ btnEditAccounts.addEventListener('click', async () => {
     btnEditAccounts.innerHTML = iconEdit;
     btnEditAccounts.title = '편집';
     btnAddAccount.style.display = '';
-    destroySortable();
   }
   const accounts = await window.electronAPI.getAllAccounts();
   renderAccountList(accounts);

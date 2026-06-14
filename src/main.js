@@ -560,8 +560,8 @@ async function checkAndUpdateQuota() {
       sendQuotaNotification(currentCachedEmail, modelsToAlert);
     }
 
-    // 표시 이름(displayName) 기준으로 알파벳 순 정렬하여 목록 순서가 뒤섞이는 현상 방지
-    modelQuotas.sort((a, b) => a.displayName.localeCompare(b.displayName));
+    // 제미나이(Gemini)가 먼저 나오도록 내림차순 정렬 (표시 이름 기준)
+    modelQuotas.sort((a, b) => b.displayName.localeCompare(a.displayName));
 
     // UI로 송신
     if (mainWindow && !mainWindow.isDestroyed()) {
@@ -720,7 +720,7 @@ async function fetchQuotaForAccount(account) {
     if (!models) return { email: account.email, quotas: [] };
     const accountConfig = config.global || { alertThreshold: 20, alertModels: {} };
     const { modelQuotas } = processModelsToGroups(models);
-    modelQuotas.sort((a, b) => a.displayName.localeCompare(b.displayName));
+    modelQuotas.sort((a, b) => b.displayName.localeCompare(a.displayName));
     return { email: account.email, quotas: modelQuotas };
   } catch (err) {
     console.error(`계정 ${account.email} Quota 조회 실패:`, err);
@@ -1215,15 +1215,6 @@ function registerIpcEvents() {
       console.error('계정 전환 실패:', err);
       return { success: false, error: err.message };
     }
-  });
-
-  ipcMain.handle('reorder-accounts', (event, orderedEmails) => {
-    orderedEmails.forEach((email, index) => {
-      const account = accounts.find(a => a.email === email);
-      if (account) account.order = index;
-    });
-    saveAccounts();
-    return { success: true };
   });
 
   ipcMain.handle('fetch-all-quotas', async () => {

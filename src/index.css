@@ -22,8 +22,8 @@
   --danger-color: #ef4444;
   --orange-color: #f97316;
   --yellow-color: #eab308;
-  --font-title: 'Outfit', 'Inter', sans-serif;
-  --font-body: 'Inter', sans-serif;
+  --font-title: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-body: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   --transition-smooth: all 0.2s ease-in-out;
 }
 
@@ -1172,21 +1172,6 @@ input:checked+.toggle-slider:before {
   flex: 1;
 }
 
-.drag-handle {
-  display: none;
-  cursor: grab;
-  color: var(--text-secondary);
-  padding: 2px;
-  flex-shrink: 0;
-}
-
-.drag-handle:active {
-  cursor: grabbing;
-}
-
-.edit-mode .drag-handle {
-  display: flex;
-}
 
 .account-item-email {
   font-family: var(--font-title);
@@ -1297,13 +1282,4 @@ input:checked+.toggle-slider:before {
   margin-top: 6px;
   padding-top: 6px;
   border-top: 1px solid var(--border-color);
-}
-
-/* sortablejs 드래그 중 스타일 */
-.sortable-ghost {
-  opacity: 0.4;
-}
-
-.sortable-drag {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
