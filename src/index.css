@@ -155,7 +155,7 @@ body {
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 8px;
 }
 
 /* 스크롤바 커스텀 */
@@ -487,37 +487,12 @@ input:checked+.toggle-slider:before {
   line-height: 1.4;
 }
 
-/* 모델 리스트 섹션 */
-.models-section {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  flex-grow: 1;
-}
-
-.section-title-bar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0 4px;
-}
-
-.section-title-bar h3 {
-  font-family: var(--font-title);
-  font-size: 14px;
-  font-weight: 600;
-}
-
-.model-count {
-  font-size: 11px;
-  color: var(--text-secondary);
-}
-
+/* 모델 리스트 */
 .models-list {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  /* 간격 축소 */
+  flex-grow: 1;
 }
 
 /* 개별 모델 카드 */
