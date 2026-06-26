@@ -30,6 +30,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
   },
 
   // === 계정 관리 API ===
+  openAccountWindow: () => ipcRenderer.send('open-account-window'),
+  closeAccountWindow: () => ipcRenderer.send('close-account-window'),
+  showMainSnackbar: (message, type, isHtml) => ipcRenderer.send('show-main-snackbar', { message, type, isHtml }),
+  onShowSnackbar: (callback) => ipcRenderer.on('show-snackbar', (event, data) => callback(data)),
+  getCurrentAccount: () => ipcRenderer.invoke('get-current-account'),
   getAllAccounts: () => ipcRenderer.invoke('get-all-accounts'),
   addAccount: () => ipcRenderer.invoke('add-account'),
   deleteAccount: (email) => ipcRenderer.invoke('delete-account', email),

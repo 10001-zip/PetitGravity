@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>계정 관리</title>
+  <link rel="stylesheet" href="index.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Outfit:wght@400;500;600;700&display=swap"
+    rel="stylesheet">
+  <style>
+    /* 팝업 창 전용 스타일 덮어쓰기 */
+    body {
+      background: var(--bg-color); /* 투명 모달 대신 윈도우 배경색 사용 */
+      overflow: hidden;
+      border: 1px solid var(--border-color); /* 테두리 */
+      display: flex;
+      flex-direction: column;
+      margin: 0;
+      height: 100vh;
+    }
+    
+    .modal-container-standalone {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    
+    /* 팝업창 타이틀바 영역은 드래그 가능하게 */
+    .titlebar {
+      -webkit-app-region: drag;
+    }
+    
+    .titlebar-controls, .modal-action-btn, .modal-search-wrapper, .sort-context-menu {
+      -webkit-app-region: no-drag;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- 커스텀 타이틀바 -->
+  <header class="titlebar">
+    <div class="titlebar-drag-region">
+      <span class="app-title">계정 관리</span>
+    </div>
+    <div class="titlebar-controls">
+      <button class="control-btn" id="btn-close-window" title="닫기">
+        <svg width="12" height="12" viewBox="0 0 12 12">
+          <path d="M2.5 2.5 L9.5 9.5 M9.5 2.5 L2.5 9.5" stroke="currentColor" stroke-width="1.2" fill="none" />
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- 계정 관리 컨테이너 -->
+  <div class="modal-container-standalone" id="modal-container">
+    <!-- 스낵바 -->
+    <div class="modal-snackbar" id="modal-snackbar">
+      <span class="snackbar-message" id="snackbar-message"></span>
+      <button class="snackbar-close" id="snackbar-close">&times;</button>
+    </div>
+    <!-- 상단 툴바(헤더) -->
+    <div class="modal-header">
+      <button class="modal-action-btn" id="btn-add-account" title="계정 추가">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round">
+          <line x1="12" y1="5" x2="12" y2="19" />
+          <line x1="5" y1="12" x2="19" y2="12" />
+        </svg>
+      </button>
+      <div style="position: relative;">
+        <button class="modal-action-btn" id="btn-sort-accounts" title="정렬">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <line x1="4" y1="6" x2="20" y2="6" />
+            <line x1="4" y1="12" x2="14" y2="12" />
+            <line x1="4" y1="18" x2="8" y2="18" />
+          </svg>
+        </button>
+        <div class="sort-context-menu" id="sort-context-menu">
+          <div class="sort-menu-item" data-sort="asc">오름차순</div>
+          <div class="sort-menu-item" data-sort="desc">내림차순</div>
+          <div class="sort-menu-item" data-sort="tokens-high">토큰 많은 순</div>
+          <div class="sort-menu-item" data-sort="tokens-low">토큰 적은 순</div>
+        </div>
+      </div>
+      <div class="modal-search-wrapper">
+        <svg class="search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="2">
+          <circle cx="11" cy="11" r="8" />
+          <path d="M21 21l-4.35-4.35" />
+        </svg>
+        <input type="text" class="modal-search" id="modal-search" placeholder="검색...">
+        <button class="modal-search-clear" id="btn-search-clear" style="display: none;" title="검색어 지우기">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round">
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
+        </button>
+      </div>
+      <button class="modal-action-btn" id="btn-edit-accounts" title="편집">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>
+      </button>
+    </div>
+    <!-- 계정 리스트 -->
+    <div class="modal-account-list" id="modal-account-list">
+      <div class="empty-state">
+        <p>등록된 계정이 없습니다. 상단의 + 버튼으로 계정을 추가해 주세요.</p>
+      </div>
+    </div>
+  </div>
+
+  <script src="accounts.js"></script>
+</body>
+
+</html>

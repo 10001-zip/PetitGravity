@@ -13,6 +13,7 @@ try {
 } catch (_) { }
 
 let mainWindow;
+let accountWindow;
 let appTray;
 let isQuitting = false;
 let credentialCheckInterval;
@@ -1155,9 +1156,81 @@ function registerIpcEvents() {
     restartAntigravityProcess();
   });
 
+  // 계정 전환 창 관리
+  ipcMain.on('open-account-window', () => {
+    if (accountWindow) {
+      accountWindow.focus();
+      return;
+    }
+
+    const bounds = config.accountWindowBounds || {};
+
+    accountWindow = new BrowserWindow({
+      width: bounds.width || 338, // 450 * 0.75
+      height: bounds.height || 600,
+      x: bounds.x,
+      y: bounds.y,
+      minWidth: 300,
+      minHeight: 400,
+      title: '계정 관리',
+      icon: path.join(__dirname, 'assets', 'icon_rounded.png'),
+      webPreferences: {
+        preload: path.join(__dirname, 'preload.js'),
+        contextIsolation: true,
+        nodeIntegration: false
+      },
+      frame: false,
+      alwaysOnTop: config.global.enableWindowSnap ? true : false,
+      resizable: true,
+      show: false // Load first, then show
+    });
+
+    accountWindow.loadFile(path.join(__dirname, 'accounts.html'));
+    
+    accountWindow.once('ready-to-show', () => {
+      accountWindow.show();
+    });
+
+    const saveAccountWindowState = () => {
+      if (accountWindow && !accountWindow.isMaximized() && !accountWindow.isMinimized()) {
+        config.accountWindowBounds = accountWindow.getBounds();
+        saveConfig();
+      }
+    };
+
+    let boundsTimeout;
+    const debouncedSave = () => {
+      clearTimeout(boundsTimeout);
+      boundsTimeout = setTimeout(saveAccountWindowState, 500);
+    };
+
+    accountWindow.on('resize', debouncedSave);
+    accountWindow.on('move', debouncedSave);
+
+    accountWindow.on('closed', () => {
+      accountWindow = null;
+    });
+  });
+
+  ipcMain.on('close-account-window', () => {
+    if (accountWindow) {
+      accountWindow.close();
+    }
+  });
+
+  ipcMain.on('show-main-snackbar', (event, data) => {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('show-snackbar', data);
+    }
+  });
+
   // === 계정 관리 IPC 핸들러 ===
   ipcMain.handle('get-all-accounts', () => {
     return accounts.sort((a, b) => (a.order || 0) - (b.order || 0));
+  });
+
+  ipcMain.handle('get-current-account', () => {
+    return config.currentAccount;
   });
 
   ipcMain.handle('add-account', async () => {
@@ -1182,9 +1255,41 @@ function registerIpcEvents() {
   });
 
   ipcMain.handle('switch-account', async (event, email) => {
+    // 1. Immediately close the account window
+    const isCurrent = (config.currentAccount === email);
+    
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('show-snackbar', { 
+        message: isCurrent ? '안티그래비티 재실행 중...' : `${email} 계정으로 전환 중...`, 
+        type: 'info',
+        isHtml: false
+      });
+    }
+
+    if (accountWindow) {
+      accountWindow.close();
+    }
+
     try {
       const account = accounts.find(a => a.email === email);
-      if (!account) return { success: false, error: '계정을 찾을 수 없습니다.' };
+      if (!account) {
+        if (mainWindow) mainWindow.webContents.send('show-snackbar', { message: '계정 전환 실패: 계정을 찾을 수 없습니다.', type: 'error' });
+        return { success: false, error: '계정을 찾을 수 없습니다.' };
+      }
+      
+      // 즉시 UI 반영 (로딩 상태)
+      currentCachedEmail = email;
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send('account-status', {
+          loggedIn: true,
+          email: email,
+          quotas: [],
+          isLoading: true,
+          config: config.global || { alertThreshold: 20, alertModels: {} },
+          isAppRunning: true
+        });
+      }
+      
       let accessToken = account.accessToken;
       if (account.refreshToken) {
         const refreshed = await refreshAccessToken(account.refreshToken);
@@ -1195,7 +1300,9 @@ function registerIpcEvents() {
           saveAccounts();
         }
       }
+      
       await killAntigravityProcesses();
+      
       let expiryDate = account.expiry ? new Date(account.expiry) : new Date(Date.now() + 3600000);
       let expiry = expiryDate.toISOString().replace('Z', '000Z');
       const credPayload = JSON.stringify({
@@ -1203,16 +1310,32 @@ function registerIpcEvents() {
         auth_method: 'consumer'
       });
       const writeSuccess = await writeWindowsCredential(credPayload);
-      if (!writeSuccess) return { success: false, error: '자격 증명 쓰기 실패' };
+      if (!writeSuccess) {
+        if (mainWindow) mainWindow.webContents.send('show-snackbar', { message: '계정 전환 실패: 자격 증명 쓰기 실패', type: 'error' });
+        return { success: false, error: '자격 증명 쓰기 실패' };
+      }
+      
       await restartAntigravityProcess();
+      
       config.currentAccount = email;
       saveConfig();
-      currentCachedEmail = '';
       lastCheckedAccessToken = '';
-      setTimeout(() => checkAndUpdateQuota(), 2000);
+      
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send('show-snackbar', { 
+          message: isCurrent ? '안티그래비티가 재실행되었습니다.' : `${email} 계정으로 전환되었습니다.`, 
+          type: 'success',
+          isHtml: false
+        });
+      }
+      
+      checkAndUpdateQuota();
       return { success: true };
     } catch (err) {
       console.error('계정 전환 실패:', err);
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send('show-snackbar', { message: '계정 전환 실패: ' + err.message, type: 'error' });
+      }
       return { success: false, error: err.message };
     }
   });
