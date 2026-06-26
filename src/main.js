@@ -932,7 +932,15 @@ function updateTrayMenu(modelQuotas = [], email = null) {
     }
   });
 
-  // 3. 할당량 즉시 동기화
+  // 3. 계정 전환 창 열기
+  template.push({
+    label: '계정 전환 창 열기',
+    click: () => {
+      openAccountWindow();
+    }
+  });
+
+  // 4. 할당량 즉시 동기화
   template.push({
     label: '할당량 즉시 동기화',
     click: () => {
@@ -973,6 +981,61 @@ function createTray() {
   // 더블클릭 시 창 복구
   appTray.on('double-click', () => {
     mainWindow.show();
+  });
+}
+
+function openAccountWindow() {
+  if (accountWindow) {
+    accountWindow.focus();
+    return;
+  }
+
+  const bounds = config.accountWindowBounds || {};
+
+  accountWindow = new BrowserWindow({
+    width: bounds.width || 338, // 450 * 0.75
+    height: bounds.height || 600,
+    x: bounds.x,
+    y: bounds.y,
+    minWidth: 300,
+    minHeight: 400,
+    title: '계정 관리',
+    icon: path.join(__dirname, 'assets', 'icon_rounded.png'),
+    webPreferences: {
+      preload: path.join(__dirname, 'preload.js'),
+      contextIsolation: true,
+      nodeIntegration: false
+    },
+    frame: false,
+    alwaysOnTop: config.global.enableWindowSnap ? true : false,
+    resizable: true,
+    show: false // Load first, then show
+  });
+
+  accountWindow.loadFile(path.join(__dirname, 'accounts.html'));
+  
+  accountWindow.once('ready-to-show', () => {
+    accountWindow.show();
+  });
+
+  const saveAccountWindowState = () => {
+    if (accountWindow && !accountWindow.isMaximized() && !accountWindow.isMinimized()) {
+      config.accountWindowBounds = accountWindow.getBounds();
+      saveConfig();
+    }
+  };
+
+  let boundsTimeout;
+  const debouncedSave = () => {
+    clearTimeout(boundsTimeout);
+    boundsTimeout = setTimeout(saveAccountWindowState, 500);
+  };
+
+  accountWindow.on('resize', debouncedSave);
+  accountWindow.on('move', debouncedSave);
+
+  accountWindow.on('closed', () => {
+    accountWindow = null;
   });
 }
 
@@ -1158,58 +1221,7 @@ function registerIpcEvents() {
 
   // 계정 전환 창 관리
   ipcMain.on('open-account-window', () => {
-    if (accountWindow) {
-      accountWindow.focus();
-      return;
-    }
-
-    const bounds = config.accountWindowBounds || {};
-
-    accountWindow = new BrowserWindow({
-      width: bounds.width || 338, // 450 * 0.75
-      height: bounds.height || 600,
-      x: bounds.x,
-      y: bounds.y,
-      minWidth: 300,
-      minHeight: 400,
-      title: '계정 관리',
-      icon: path.join(__dirname, 'assets', 'icon_rounded.png'),
-      webPreferences: {
-        preload: path.join(__dirname, 'preload.js'),
-        contextIsolation: true,
-        nodeIntegration: false
-      },
-      frame: false,
-      alwaysOnTop: config.global.enableWindowSnap ? true : false,
-      resizable: true,
-      show: false // Load first, then show
-    });
-
-    accountWindow.loadFile(path.join(__dirname, 'accounts.html'));
-    
-    accountWindow.once('ready-to-show', () => {
-      accountWindow.show();
-    });
-
-    const saveAccountWindowState = () => {
-      if (accountWindow && !accountWindow.isMaximized() && !accountWindow.isMinimized()) {
-        config.accountWindowBounds = accountWindow.getBounds();
-        saveConfig();
-      }
-    };
-
-    let boundsTimeout;
-    const debouncedSave = () => {
-      clearTimeout(boundsTimeout);
-      boundsTimeout = setTimeout(saveAccountWindowState, 500);
-    };
-
-    accountWindow.on('resize', debouncedSave);
-    accountWindow.on('move', debouncedSave);
-
-    accountWindow.on('closed', () => {
-      accountWindow = null;
-    });
+    openAccountWindow();
   });
 
   ipcMain.on('close-account-window', () => {

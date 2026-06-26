@@ -18,10 +18,13 @@ const sortContextMenu = document.getElementById('sort-context-menu');
 
 const iconEdit = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>`;
 const iconCheck = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
+const iconSelectAll = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 12l3 3 5-5"/></svg>`;
+const iconDeselectAll = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>`;
 
 let modalEditMode = false;
 let currentSortMode = 'default';
 let allAccountQuotas = {};
+let selectedAccounts = new Set();
 
 function showSnackbar(message, type, isHtml = false) {
   if (isHtml) {
@@ -148,6 +151,15 @@ async function renderAccountList(accounts) {
       modelsHtml += '</div>';
     }
 
+    let checkboxHtml = '';
+    if (modalEditMode) {
+      const isChecked = selectedAccounts.has(account.email);
+      checkboxHtml = '<label class="account-checkbox-label">' +
+        '<input type="checkbox" class="account-checkbox" data-email="' + account.email + '"' + (isChecked ? ' checked' : '') + '>' +
+        '<span class="account-checkbox-custom"></span>' +
+        '</label>';
+    }
+
     let actionBtn = '';
     if (modalEditMode) {
       actionBtn = '<button class="account-item-action delete-btn" data-email="' + account.email + '" title="삭제">' +
@@ -167,6 +179,7 @@ async function renderAccountList(accounts) {
 
     item.innerHTML = '<div class="account-item-header">' +
       '<div class="account-item-left">' +
+      checkboxHtml +
       '<span class="account-item-email">' + account.email + '</span>' +
       '</div>' + actionBtn + '</div>' + modelsHtml;
 
@@ -179,6 +192,7 @@ async function renderAccountList(accounts) {
         const email = e.currentTarget.dataset.email;
         const result = await window.electronAPI.deleteAccount(email);
         if (result.success) {
+          selectedAccounts.delete(email);
           showSnackbar(email + ' 계정이 삭제되었습니다.', 'success');
           loadAndRenderAccounts();
         } else {
@@ -186,6 +200,18 @@ async function renderAccountList(accounts) {
         }
       });
     });
+    modalAccountList.querySelectorAll('.account-checkbox').forEach(cb => {
+      cb.addEventListener('change', (e) => {
+        const email = e.target.dataset.email;
+        if (e.target.checked) {
+          selectedAccounts.add(email);
+        } else {
+          selectedAccounts.delete(email);
+        }
+        updateSelectAllButton();
+      });
+    });
+    updateSelectAllButton();
   } else {
     modalAccountList.querySelectorAll('.switch-action-btn').forEach(btn => {
       btn.addEventListener('click', async (e) => {
@@ -225,7 +251,7 @@ modalSnackbar.addEventListener('click', async (e) => {
   }
 });
 
-btnAddAccount.addEventListener('click', async () => {
+async function handleAddAccount() {
   showSnackbar('브라우저에서 로그인을 진행해 주세요.', 'success');
   
   const result = await window.electronAPI.addAccount();
@@ -256,18 +282,51 @@ btnAddAccount.addEventListener('click', async () => {
       showSnackbar('계정 추가 실패: ' + (result.error || '알 수 없는 오류'), 'error');
     }
   }
-});
+}
+
+btnAddAccount.addEventListener('click', handleAddAccount);
+
+function updateSelectAllButton() {
+  const checkboxes = modalAccountList.querySelectorAll('.account-checkbox');
+  const allChecked = checkboxes.length > 0 && [...checkboxes].every(cb => cb.checked);
+  btnAddAccount.innerHTML = allChecked ? iconDeselectAll : iconSelectAll;
+  btnAddAccount.title = allChecked ? '전체 해제' : '전체 선택';
+}
+
+function toggleSelectAll() {
+  const checkboxes = modalAccountList.querySelectorAll('.account-checkbox');
+  const allChecked = checkboxes.length > 0 && [...checkboxes].every(cb => cb.checked);
+  checkboxes.forEach(cb => {
+    cb.checked = !allChecked;
+    const email = cb.dataset.email;
+    if (!allChecked) {
+      selectedAccounts.add(email);
+    } else {
+      selectedAccounts.delete(email);
+    }
+  });
+  updateSelectAllButton();
+}
 
 btnEditAccounts.addEventListener('click', async () => {
   modalEditMode = !modalEditMode;
   if (modalEditMode) {
     btnEditAccounts.innerHTML = iconCheck;
     btnEditAccounts.title = '완료';
-    btnAddAccount.style.display = 'none';
+    // 추가 버튼을 전체 선택/해제 버튼으로 전환
+    btnAddAccount.innerHTML = iconSelectAll;
+    btnAddAccount.title = '전체 선택';
+    btnAddAccount.removeEventListener('click', handleAddAccount);
+    btnAddAccount.addEventListener('click', toggleSelectAll);
   } else {
     btnEditAccounts.innerHTML = iconEdit;
     btnEditAccounts.title = '편집';
-    btnAddAccount.style.display = '';
+    // 전체 선택 버튼을 추가 버튼으로 복원
+    btnAddAccount.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>';
+    btnAddAccount.title = '계정 추가';
+    btnAddAccount.removeEventListener('click', toggleSelectAll);
+    btnAddAccount.addEventListener('click', handleAddAccount);
+    selectedAccounts.clear();
   }
   const accounts = await window.electronAPI.getAllAccounts();
   await renderAccountList(accounts);

@@ -1186,6 +1186,46 @@ input:checked+.toggle-slider:before {
   background: #fee2e2;
 }
 
+/* 편집 모드 체크박스 */
+.account-checkbox-label {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.account-checkbox {
+  display: none;
+}
+
+.account-checkbox-custom {
+  width: 16px;
+  height: 16px;
+  border: 1.5px solid #b0b0b0;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--transition-smooth);
+  background: transparent;
+}
+
+.account-checkbox:checked + .account-checkbox-custom {
+  background: var(--accent-color, #4f8cff);
+  border-color: var(--accent-color, #4f8cff);
+}
+
+.account-checkbox:checked + .account-checkbox-custom::after {
+  content: '';
+  display: block;
+  width: 4px;
+  height: 8px;
+  border: solid #fff;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+  margin-bottom: 2px;
+}
+
 /* 계정 아이템 모델 리스트 */
 .account-models {
   display: flex;
