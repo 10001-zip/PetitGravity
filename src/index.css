@@ -938,11 +938,26 @@ input:checked+.toggle-slider:before {
   font-size: 12px;
   font-weight: 500;
   gap: 4px;
-  transition: var(--transition-smooth);
+  transition: background-color 0.2s ease-in-out;
 }
 
-.modal-action-btn:hover {
+.modal-action-btn:hover:not(:disabled) {
   background: #e5e5e5;
+}
+
+.modal-action-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.modal-action-btn.delete-mode {
+  color: var(--danger-color, #ef4444);
+  border-color: #fca5a5;
+}
+
+.modal-action-btn.delete-mode:hover:not(:disabled) {
+  background: #fee2e2;
 }
 
 .modal-action-btn.loading {
@@ -1211,8 +1226,8 @@ input:checked+.toggle-slider:before {
 }
 
 .account-checkbox:checked + .account-checkbox-custom {
-  background: var(--accent-color, #4f8cff);
-  border-color: var(--accent-color, #4f8cff);
+  background: var(--text-primary, #333);
+  border-color: var(--text-primary, #333);
 }
 
 .account-checkbox:checked + .account-checkbox-custom::after {
@@ -1298,3 +1313,110 @@ input:checked+.toggle-slider:before {
   padding-top: 6px;
   border-top: 1px solid var(--border-color);
 }
+
+/* 삭제 확인 모달 */
+.confirm-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+.confirm-modal-overlay.visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.confirm-modal-content {
+  background: var(--bg-color);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  padding: 20px;
+  width: 280px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  transform: scale(0.95);
+  opacity: 0;
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s ease;
+}
+
+.confirm-modal-overlay.visible .confirm-modal-content {
+  transform: scale(1);
+  opacity: 1;
+}
+
+.confirm-modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  text-align: left;
+}
+
+.confirm-modal-body h3 {
+  margin: 0;
+  font-family: var(--font-title);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.confirm-modal-body p {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.confirm-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  width: 100%;
+}
+
+.confirm-btn {
+  padding: 0 16px;
+  height: 32px;
+  border-radius: 8px;
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--transition-smooth);
+}
+
+.confirm-btn.cancel {
+  background: #e0e0e0;
+  color: var(--text-primary);
+}
+
+.confirm-btn.cancel:hover {
+  background: #cccccc;
+}
+
+.confirm-btn.delete {
+  background: var(--danger-color, #ef4444);
+  color: #fff;
+}
+
+.confirm-btn.delete:hover {
+  background: #dc2626;
+}

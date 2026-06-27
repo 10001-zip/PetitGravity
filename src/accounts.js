@@ -16,10 +16,17 @@ const snackbarClose = document.getElementById('snackbar-close');
 const btnSortAccounts = document.getElementById('btn-sort-accounts');
 const sortContextMenu = document.getElementById('sort-context-menu');
 
+const confirmModal = document.getElementById('confirm-modal');
+const confirmModalText = document.getElementById('confirm-modal-text');
+const btnConfirmCancel = document.getElementById('confirm-btn-cancel');
+const btnConfirmDelete = document.getElementById('confirm-btn-delete');
+
 const iconEdit = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>`;
 const iconCheck = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
 const iconSelectAll = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 12l3 3 5-5"/></svg>`;
 const iconDeselectAll = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>`;
+const iconSort = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="6" x2="20" y2="6" /><line x1="4" y1="12" x2="14" y2="12" /><line x1="4" y1="18" x2="8" y2="18" /></svg>`;
+const iconTrash = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>`;
 
 let modalEditMode = false;
 let currentSortMode = 'default';
@@ -39,6 +46,38 @@ function hideSnackbar() {
   modalSnackbar.className = 'modal-snackbar';
 }
 
+function showConfirm(message) {
+  return new Promise((resolve) => {
+    confirmModalText.textContent = message;
+    confirmModal.style.display = 'flex';
+    // 강제 리플로우로 애니메이션 트리거
+    void confirmModal.offsetWidth;
+    confirmModal.classList.add('visible');
+
+    const handleCancel = () => {
+      cleanup();
+      resolve(false);
+    };
+
+    const handleDelete = () => {
+      cleanup();
+      resolve(true);
+    };
+
+    const cleanup = () => {
+      btnConfirmCancel.removeEventListener('click', handleCancel);
+      btnConfirmDelete.removeEventListener('click', handleDelete);
+      confirmModal.classList.remove('visible');
+      setTimeout(() => {
+        confirmModal.style.display = 'none';
+      }, 200);
+    };
+
+    btnConfirmCancel.addEventListener('click', handleCancel);
+    btnConfirmDelete.addEventListener('click', handleDelete);
+  });
+}
+
 function getPctColorClass(percentage) {
   if (percentage <= 20) return 'pct-red';
   if (percentage <= 40) return 'pct-orange';
@@ -48,20 +87,40 @@ function getPctColorClass(percentage) {
 
 function getRefreshText(quotaInfo) {
   if (!quotaInfo) return '';
-  if (quotaInfo.resetDate) return quotaInfo.resetDate;
-  if (quotaInfo.next_refresh_time) {
-    try {
-      const dt = new Date(quotaInfo.next_refresh_time);
-      let hours = dt.getHours();
-      let ampm = hours >= 12 ? 'PM' : 'AM';
-      hours = hours % 12;
-      hours = hours ? hours : 12;
-      let minutes = dt.getMinutes();
-      minutes = minutes < 10 ? '0' + minutes : minutes;
-      return `${ampm} ${hours}:${minutes} 리셋`;
-    } catch (e) { }
+  
+  let resetDate = null;
+  const resetStr = quotaInfo.quotaResetTime || quotaInfo.resetTime || quotaInfo.nextResetTime || quotaInfo.quotaResetTimestamp || quotaInfo.refreshTime;
+  
+  if (typeof resetStr === 'string') {
+    resetDate = new Date(resetStr);
+  } else if (typeof resetStr === 'number') {
+    resetDate = new Date(resetStr * 1000);
+  } else if (resetStr && resetStr.seconds) {
+    resetDate = new Date(resetStr.seconds * 1000);
+  } else if (quotaInfo.resetTime && quotaInfo.resetTime.seconds) {
+    resetDate = new Date(quotaInfo.resetTime.seconds * 1000);
+  } else if (quotaInfo.quotaResetTime && quotaInfo.quotaResetTime.seconds) {
+    resetDate = new Date(quotaInfo.quotaResetTime.seconds * 1000);
   }
-  return '';
+  
+  if (!resetDate || isNaN(resetDate.getTime())) return '';
+  
+  const diffMs = resetDate - new Date();
+  if (diffMs <= 0) return 'soon';
+  
+  const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  const hours = Math.floor((diffMs / (1000 * 60 * 60)) % 24);
+  const mins = Math.floor((diffMs / (1000 * 60)) % 60);
+  
+  if (days > 0) {
+    return `${days}d ${hours}h`;
+  } else if (hours > 0) {
+    return `${hours}h ${mins}m`;
+  } else if (mins > 0) {
+    return `${mins}m`;
+  } else {
+    return 'soon';
+  }
 }
 
 async function loadAndRenderAccounts() {
@@ -190,6 +249,9 @@ async function renderAccountList(accounts) {
     modalAccountList.querySelectorAll('.delete-btn').forEach(btn => {
       btn.addEventListener('click', async (e) => {
         const email = e.currentTarget.dataset.email;
+        const isConfirmed = await showConfirm(`'${email}' 계정을 삭제하시겠습니까?`);
+        if (!isConfirmed) return;
+        
         const result = await window.electronAPI.deleteAccount(email);
         if (result.success) {
           selectedAccounts.delete(email);
@@ -289,8 +351,11 @@ btnAddAccount.addEventListener('click', handleAddAccount);
 function updateSelectAllButton() {
   const checkboxes = modalAccountList.querySelectorAll('.account-checkbox');
   const allChecked = checkboxes.length > 0 && [...checkboxes].every(cb => cb.checked);
-  btnAddAccount.innerHTML = allChecked ? iconDeselectAll : iconSelectAll;
+  btnAddAccount.innerHTML = allChecked ? iconSelectAll : iconDeselectAll;
   btnAddAccount.title = allChecked ? '전체 해제' : '전체 선택';
+  if (modalEditMode) {
+    btnSortAccounts.disabled = selectedAccounts.size === 0;
+  }
 }
 
 function toggleSelectAll() {
@@ -314,10 +379,17 @@ btnEditAccounts.addEventListener('click', async () => {
     btnEditAccounts.innerHTML = iconCheck;
     btnEditAccounts.title = '완료';
     // 추가 버튼을 전체 선택/해제 버튼으로 전환
-    btnAddAccount.innerHTML = iconSelectAll;
+    btnAddAccount.innerHTML = iconDeselectAll;
     btnAddAccount.title = '전체 선택';
     btnAddAccount.removeEventListener('click', handleAddAccount);
     btnAddAccount.addEventListener('click', toggleSelectAll);
+    // 정렬 버튼을 삭제 버튼으로 전환
+    btnSortAccounts.innerHTML = iconTrash;
+    btnSortAccounts.title = '선택 항목 삭제';
+    btnSortAccounts.classList.add('delete-mode');
+    btnSortAccounts.disabled = selectedAccounts.size === 0;
+    btnSortAccounts.removeEventListener('click', handleSortMenu);
+    btnSortAccounts.addEventListener('click', handleDeleteSelected);
   } else {
     btnEditAccounts.innerHTML = iconEdit;
     btnEditAccounts.title = '편집';
@@ -326,6 +398,13 @@ btnEditAccounts.addEventListener('click', async () => {
     btnAddAccount.title = '계정 추가';
     btnAddAccount.removeEventListener('click', toggleSelectAll);
     btnAddAccount.addEventListener('click', handleAddAccount);
+    // 삭제 버튼을 정렬 버튼으로 복원
+    btnSortAccounts.innerHTML = iconSort;
+    btnSortAccounts.title = '정렬';
+    btnSortAccounts.classList.remove('delete-mode');
+    btnSortAccounts.disabled = false;
+    btnSortAccounts.removeEventListener('click', handleDeleteSelected);
+    btnSortAccounts.addEventListener('click', handleSortMenu);
     selectedAccounts.clear();
   }
   const accounts = await window.electronAPI.getAllAccounts();
@@ -353,10 +432,38 @@ btnSearchClear.addEventListener('click', async () => {
   await renderAccountList(accounts);
 });
 
-btnSortAccounts.addEventListener('click', (e) => {
+function handleSortMenu(e) {
   e.stopPropagation();
   sortContextMenu.classList.toggle('active');
-});
+}
+
+async function handleDeleteSelected() {
+  if (selectedAccounts.size === 0) return;
+  
+  const isConfirmed = await showConfirm(`선택한 ${selectedAccounts.size}개의 계정을 정말 삭제하시겠습니까?`);
+  if (!isConfirmed) return;
+
+  const emails = Array.from(selectedAccounts);
+  let successCount = 0;
+  
+  btnSortAccounts.disabled = true;
+  btnSortAccounts.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67" /></svg>';
+  btnSortAccounts.querySelector('svg').style.animation = 'spin 0.8s linear infinite';
+  
+  for (const email of emails) {
+    const result = await window.electronAPI.deleteAccount(email);
+    if (result.success) {
+      successCount++;
+    }
+  }
+  selectedAccounts.clear();
+  showSnackbar(`${successCount}개의 계정이 삭제되었습니다.`, 'success');
+  btnSortAccounts.innerHTML = iconTrash;
+  btnSortAccounts.disabled = true;
+  loadAndRenderAccounts();
+}
+
+btnSortAccounts.addEventListener('click', handleSortMenu);
 
 document.addEventListener('click', (e) => {
   if (!sortContextMenu.contains(e.target) && e.target !== btnSortAccounts) {
