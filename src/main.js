@@ -1,5 +1,6 @@
 const { app, BrowserWindow, Tray, Menu, ipcMain, Notification, shell, screen, dialog } = require('electron');
 const { autoUpdater } = require('electron-updater');
+const log = require('electron-log');
 const path = require('path');
 const fs = require('fs');
 const { exec } = require('child_process');
@@ -1383,6 +1384,8 @@ if (!gotTheLock) {
     loadAccounts();
 
     // 자동 업데이트 설정
+    autoUpdater.logger = log;
+    autoUpdater.logger.transports.file.level = 'info';
     autoUpdater.autoDownload = true;
     
     // 개발 모드가 아닐 때만 업데이트 체크
@@ -1390,17 +1393,30 @@ if (!gotTheLock) {
       console.log('개발 모드에서는 자동 업데이트를 확인하지 않습니다.');
     } else {
       autoUpdater.checkForUpdatesAndNotify().catch(err => {
-        console.error('업데이트 체크 오류:', err);
+        log.error('업데이트 체크 오류:', err);
       });
     }
 
+    autoUpdater.on('checking-for-update', () => {
+      log.info('업데이트 확인 중...');
+    });
+
+    autoUpdater.on('error', (err) => {
+      log.error('업데이트 에러:', err);
+      if (mainWindow) {
+        mainWindow.webContents.send('show-snackbar', { message: `업데이트 오류 발생: ${err.message}`, type: 'error' });
+      }
+    });
+
     autoUpdater.on('update-available', () => {
+      log.info('업데이트 사용 가능');
       if (mainWindow) {
         mainWindow.webContents.send('update-downloading');
       }
     });
 
     autoUpdater.on('update-downloaded', (info) => {
+      log.info('업데이트 다운로드 완료');
       if (mainWindow) {
         mainWindow.webContents.send('update-ready');
       }
