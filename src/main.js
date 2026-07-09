@@ -1387,14 +1387,11 @@ if (!gotTheLock) {
     autoUpdater.logger = log;
     autoUpdater.logger.transports.file.level = 'info';
     autoUpdater.autoDownload = true;
+    autoUpdater.autoInstallOnAppQuit = false;
     
     // 개발 모드가 아닐 때만 업데이트 체크
     if (!app.isPackaged) {
       console.log('개발 모드에서는 자동 업데이트를 확인하지 않습니다.');
-    } else {
-      autoUpdater.checkForUpdatesAndNotify().catch(err => {
-        log.error('업데이트 체크 오류:', err);
-      });
     }
 
     autoUpdater.on('checking-for-update', () => {
@@ -1444,6 +1441,15 @@ if (!gotTheLock) {
     setTimeout(() => {
       checkAndUpdateQuota();
     }, 1000);
+
+    // 창 로드가 완전히 끝나면 업데이트 체크 (UI 알림 누락 방지)
+    if (mainWindow && app.isPackaged) {
+      mainWindow.webContents.once('did-finish-load', () => {
+        autoUpdater.checkForUpdatesAndNotify().catch(err => {
+          log.error('업데이트 체크 오류:', err);
+        });
+      });
+    }
 
     // 설정된 주기로 모니터링 데몬 작동 (기본 15초)
     const initialInterval = (config.global && config.global.checkInterval) ? Math.floor(config.global.checkInterval * 60 * 1000) : 60000;

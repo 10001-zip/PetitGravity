@@ -49,6 +49,7 @@ rl.question(`현재 버전은 ${currentVersion} 입니다. 바로 빌드하려�
         
         const filesToMove = [
           `petitgravity-Setup-${pkg.version}.exe`,
+          `petitgravity-Setup-${pkg.version}.exe.blockmap`,
           `latest.yml`
         ];
 

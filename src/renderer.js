@@ -562,29 +562,32 @@ const updateModalOverlay = document.getElementById('update-modal-overlay');
 const btnUpdateLater = document.getElementById('btn-update-later');
 const btnUpdateNow = document.getElementById('btn-update-now');
 
-if (window.electronAPI.onUpdateDownloading) {
-  window.electronAPI.onUpdateDownloading(() => {
-    showSnackbar('새 버전 업데이트를 백그라운드에서 다운로드 중입니다. 잠시만 기다려주세요...', 'info');
+if (window.electronAPI.onUpdateReady) {
+  window.electronAPI.onUpdateReady(() => {
+    if (updateModalOverlay) {
+      updateModalOverlay.style.display = 'flex';
+      requestAnimationFrame(() => {
+        updateModalOverlay.classList.add('active');
+      });
+    }
   });
 }
 
-if (window.electronAPI.onUpdateReady) {
-  window.electronAPI.onUpdateReady(() => {
-    if (updateModalOverlay) updateModalOverlay.classList.add('active');
-  });
+function closeUpdateModal() {
+  if (!updateModalOverlay) return;
+  updateModalOverlay.classList.remove('active');
+  setTimeout(() => {
+    updateModalOverlay.style.display = 'none';
+  }, 250);
 }
 
 if (btnUpdateLater) {
-  btnUpdateLater.addEventListener('click', () => {
-    updateModalOverlay.classList.remove('active');
-  });
+  btnUpdateLater.addEventListener('click', closeUpdateModal);
 }
 
 const btnCloseUpdateModal = document.getElementById('btn-close-update-modal');
 if (btnCloseUpdateModal) {
-  btnCloseUpdateModal.addEventListener('click', () => {
-    updateModalOverlay.classList.remove('active');
-  });
+  btnCloseUpdateModal.addEventListener('click', closeUpdateModal);
 }
 
 if (btnUpdateNow) {
