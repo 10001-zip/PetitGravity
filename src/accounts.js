@@ -150,6 +150,13 @@ async function renderAccountList(accounts) {
     return total / monitoredQuotas.length;
   };
 
+  const getSpecificModelScore = (email, modelName) => {
+    const quotas = allAccountQuotas[email];
+    if (!quotas || quotas.length === 0) return 0;
+    const modelQuota = quotas.find(q => q.name === modelName);
+    return modelQuota ? (modelQuota.percentage || 0) : 0;
+  };
+
   sortedAccounts.sort((a, b) => {
     // 현재 계정은 항상 최상단 유지
     if (a.email === currentEmail) return -1;
@@ -164,6 +171,14 @@ async function renderAccountList(accounts) {
       return getAccountTokenScore(b.email) - getAccountTokenScore(a.email);
     } else if (currentSortMode === 'tokens-low') {
       return getAccountTokenScore(a.email) - getAccountTokenScore(b.email);
+    } else if (currentSortMode === 'gemini-high') {
+      return getSpecificModelScore(b.email, 'gemini_models') - getSpecificModelScore(a.email, 'gemini_models');
+    } else if (currentSortMode === 'gemini-low') {
+      return getSpecificModelScore(a.email, 'gemini_models') - getSpecificModelScore(b.email, 'gemini_models');
+    } else if (currentSortMode === 'claude-gpt-high') {
+      return getSpecificModelScore(b.email, 'claude_gpt_models') - getSpecificModelScore(a.email, 'claude_gpt_models');
+    } else if (currentSortMode === 'claude-gpt-low') {
+      return getSpecificModelScore(a.email, 'claude_gpt_models') - getSpecificModelScore(b.email, 'claude_gpt_models');
     }
     return 0; // default (추가된 순서 등 원래 순서 유지)
   });
