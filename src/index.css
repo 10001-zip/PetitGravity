@@ -754,6 +754,7 @@ input:checked+.toggle-slider:before {
 
 .account-card:active .account-card-overlay {
   background-color: rgba(205, 205, 205, 0.92);
+  transition: none;
 }
 
 /* ==================== */
