@@ -210,7 +210,11 @@ async function renderAccountList(accounts) {
 
     let modelsHtml = '';
     if (monitoredQuotas === null) {
-      modelsHtml = '<div class="account-models-loading">할당량 조회 중...</div>';
+      modelsHtml = '<div class="account-models">' +
+        '<div class="account-models-loading-overlay">할당량 조회 중...</div>' +
+        '<div class="account-model-item" style="visibility: hidden;"><span class="account-model-name">Gemini Models</span></div>' +
+        '<div class="account-model-item" style="visibility: hidden;"><span class="account-model-name">Claude and GPT models</span></div>' +
+        '</div>';
     } else if (monitoredQuotas.length > 0) {
       modelsHtml = '<div class="account-models">';
       monitoredQuotas.forEach(q => {
@@ -226,7 +230,11 @@ async function renderAccountList(accounts) {
       });
       modelsHtml += '</div>';
     } else {
-      modelsHtml = '<div class="account-models-loading" style="opacity: 0.5;">조회된 할당량 없음</div>';
+      modelsHtml = '<div class="account-models">' +
+        '<div class="account-models-loading-overlay" style="opacity: 0.5;">조회된 할당량 없음</div>' +
+        '<div class="account-model-item" style="visibility: hidden;"><span class="account-model-name">Gemini Models</span></div>' +
+        '<div class="account-model-item" style="visibility: hidden;"><span class="account-model-name">Claude and GPT models</span></div>' +
+        '</div>';
     }
 
     let checkboxHtml = '';
