@@ -31,6 +31,7 @@ const iconTrash = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" s
 let modalEditMode = false;
 let currentSortMode = 'default';
 let allAccountQuotas = {};
+let allAccountTiers = {};
 let selectedAccounts = new Set();
 
 function showSnackbar(message, type, isHtml = false) {
@@ -128,8 +129,10 @@ async function loadAndRenderAccounts() {
   await renderAccountList(accounts);
   const quotaResults = await window.electronAPI.fetchAllQuotas();
   allAccountQuotas = {};
+  allAccountTiers = {};
   for (const result of quotaResults) {
     allAccountQuotas[result.email] = result.quotas || [];
+    if (result.tier) allAccountTiers[result.email] = result.tier;
   }
   const updatedAccounts = await window.electronAPI.getAllAccounts();
   await renderAccountList(updatedAccounts);
@@ -157,6 +160,15 @@ async function renderAccountList(accounts) {
     return modelQuota ? (modelQuota.percentage || 0) : 0;
   };
 
+  const getAccountTierRank = (accountObj) => {
+    const tierValue = allAccountTiers[accountObj.email] !== undefined ? allAccountTiers[accountObj.email] : accountObj.tier;
+    if (tierValue === undefined || tierValue === null) return 0;
+    const rawTier = String(tierValue).toUpperCase();
+    if (rawTier.includes('ULTRA')) return 2;
+    if (rawTier.includes('PRO')) return 1;
+    return 0;
+  };
+
   sortedAccounts.sort((a, b) => {
     // 현재 계정은 항상 최상단 유지
     if (a.email === currentEmail) return -1;
@@ -167,6 +179,10 @@ async function renderAccountList(accounts) {
       return a.email.localeCompare(b.email);
     } else if (currentSortMode === 'desc') {
       return b.email.localeCompare(a.email);
+    } else if (currentSortMode === 'tier-high') {
+      return getAccountTierRank(b) - getAccountTierRank(a);
+    } else if (currentSortMode === 'tier-low') {
+      return getAccountTierRank(a) - getAccountTierRank(b);
     } else if (currentSortMode === 'tokens-high') {
       return getAccountTokenScore(b.email) - getAccountTokenScore(a.email);
     } else if (currentSortMode === 'tokens-low') {
@@ -263,10 +279,23 @@ async function renderAccountList(accounts) {
       }
     }
 
+    // 티어 뱃지 생성 (Pro / Ultra만 표시)
+    let tierBadgeHtml = '';
+    const tierValue = allAccountTiers[account.email] !== undefined ? allAccountTiers[account.email] : account.tier;
+    if (tierValue !== undefined && tierValue !== null) {
+      const rawTier = String(tierValue).toUpperCase();
+      if (rawTier.includes('ULTRA')) {
+        tierBadgeHtml = '<span class="tier-badge tier-ultra">Ultra</span>';
+      } else if (rawTier.includes('PRO')) {
+        tierBadgeHtml = '<span class="tier-badge tier-pro">Pro</span>';
+      }
+    }
+
     item.innerHTML = '<div class="account-item-header">' +
       '<div class="account-item-left">' +
       checkboxHtml +
       '<span class="account-item-email">' + account.email + '</span>' +
+      tierBadgeHtml +
       '</div>' + actionBtn + '</div>' + modelsHtml;
 
     modalAccountList.appendChild(item);
@@ -309,8 +338,8 @@ async function renderAccountList(accounts) {
         const isCurrent = email === currentEmail;
         ab.disabled = true;
         ab.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67" /></svg>';
-        ab.querySelector('svg').style.animation = 'spin 0.8s linear infinite';
-        window.electronAPI.switchAccount(email);
+        const targetTier = allAccountTiers[email] || (sortedAccounts.find(a => a.email === email) || {}).tier;
+        window.electronAPI.switchAccount(email, targetTier);
       });
     });
   }
@@ -340,7 +369,8 @@ modalSnackbar.addEventListener('click', async (e) => {
     e.target.style.pointerEvents = 'none';
     e.target.style.opacity = '0.7';
     
-    window.electronAPI.switchAccount(email);
+    const targetTier = allAccountTiers[email];
+    window.electronAPI.switchAccount(email, targetTier);
   }
 });
 

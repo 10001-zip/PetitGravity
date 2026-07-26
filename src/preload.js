@@ -38,7 +38,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getAllAccounts: () => ipcRenderer.invoke('get-all-accounts'),
   addAccount: () => ipcRenderer.invoke('add-account'),
   deleteAccount: (email) => ipcRenderer.invoke('delete-account', email),
-  switchAccount: (email) => ipcRenderer.invoke('switch-account', email),
+  switchAccount: (email, tier) => ipcRenderer.invoke('switch-account', email, tier),
   fetchAllQuotas: () => ipcRenderer.invoke('fetch-all-quotas'),
   getAppVersion: () => ipcRenderer.invoke('get-app-version'),
   onUpdateReady: (callback) => ipcRenderer.on('update-ready', callback),

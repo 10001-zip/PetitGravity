@@ -309,7 +309,7 @@ async function getUserEmail(accessToken) {
   }
 }
 
-// Project ID 조회
+// Project ID 및 구독 티어 조회
 async function fetchProjectId(accessToken) {
   const URL = 'https://daily-cloudcode-pa.sandbox.googleapis.com/v1internal:loadCodeAssist';
   try {
@@ -325,12 +325,27 @@ async function fetchProjectId(accessToken) {
       })
     });
 
-    if (!response.ok) return null;
+    if (!response.ok) return { projectId: null, tier: null };
     const data = await response.json();
-    return data.cloudaicompanionProject || null;
+    const projectId = data.cloudaicompanionProject || null;
+
+    // 구독 티어 추출: paidTier > currentTier > allowedTiers 순 fallback
+    let tier = null;
+    if (data.paidTier) {
+      tier = data.paidTier.name || data.paidTier.id || null;
+    }
+    if (!tier && data.currentTier) {
+      tier = data.currentTier.name || data.currentTier.id || null;
+    }
+    if (!tier && data.allowedTiers && data.allowedTiers.length > 0) {
+      const defaultTier = data.allowedTiers.find(t => t.is_default) || data.allowedTiers[0];
+      tier = defaultTier.name || defaultTier.id || null;
+    }
+
+    return { projectId, tier };
   } catch (err) {
     console.error('Project ID 조회 오류:', err);
-    return null;
+    return { projectId: null, tier: null };
   }
 }
 
@@ -443,6 +458,7 @@ function processModelsToGroups(models, threshold = null, currentEmail = null, no
 let lastCheckedAccessToken = '';
 let currentCachedEmail = '';
 let currentCachedProjectId = null;
+let currentCachedTier = null;
 
 async function checkAndUpdateQuota() {
   try {
@@ -455,6 +471,7 @@ async function checkAndUpdateQuota() {
       // 로그인 안 됨
       currentCachedEmail = '';
       currentCachedProjectId = null;
+      currentCachedTier = null;
       lastCheckedAccessToken = '';
       if (mainWindow && !mainWindow.isDestroyed()) {
         mainWindow.webContents.send('account-status', { loggedIn: false, isAppRunning });
@@ -524,8 +541,15 @@ async function checkAndUpdateQuota() {
           saveConfig();
         }
 
-        // Project ID 가져오기
-        currentCachedProjectId = await fetchProjectId(accessToken);
+        // Project ID 및 구독 티어 가져오기
+        const projectResult = await fetchProjectId(accessToken);
+        currentCachedProjectId = projectResult.projectId;
+        currentCachedTier = projectResult.tier;
+        const currentAccObj = accounts.find(a => a.email === currentCachedEmail);
+        if (currentAccObj && currentCachedTier && currentAccObj.tier !== currentCachedTier) {
+          currentAccObj.tier = currentCachedTier;
+          saveAccounts();
+        }
       } else {
         // UserInfo 가져오기 실패 시 로그인 안된 것으로 간주
         currentCachedEmail = '';
@@ -546,6 +570,7 @@ async function checkAndUpdateQuota() {
         mainWindow.webContents.send('account-status', {
           loggedIn: true,
           email: currentCachedEmail,
+          tier: currentCachedTier,
           quotas: [],
           config: config.global || { alertThreshold: 20, alertModels: {} },
           isAppRunning
@@ -573,6 +598,7 @@ async function checkAndUpdateQuota() {
       mainWindow.webContents.send('account-status', {
         loggedIn: true,
         email: currentCachedEmail,
+        tier: currentCachedTier,
         quotas: modelQuotas,
         config: accountConfig,
         isAppRunning
@@ -720,16 +746,21 @@ async function fetchQuotaForAccount(account) {
         }
       }
     }
-    const projectId = await fetchProjectId(accessToken);
-    const models = await fetchQuotaData(accessToken, projectId);
-    if (!models) return { email: account.email, quotas: [] };
+    const projectResult = await fetchProjectId(accessToken);
+    if (projectResult.tier) {
+      account.tier = projectResult.tier;
+      saveAccounts();
+    }
+    const models = await fetchQuotaData(accessToken, projectResult.projectId);
+    const resolvedTier = projectResult.tier || account.tier || null;
+    if (!models) return { email: account.email, tier: resolvedTier, quotas: [] };
     const accountConfig = config.global || { alertThreshold: 20, alertModels: {} };
     const { modelQuotas } = processModelsToGroups(models);
     modelQuotas.sort((a, b) => b.displayName.localeCompare(a.displayName));
-    return { email: account.email, quotas: modelQuotas };
+    return { email: account.email, tier: resolvedTier, quotas: modelQuotas };
   } catch (err) {
     console.error(`계정 ${account.email} Quota 조회 실패:`, err);
-    return { email: account.email, quotas: [], error: err.message };
+    return { email: account.email, tier: null, quotas: [], error: err.message };
   }
 }
 
@@ -938,7 +969,7 @@ function updateTrayMenu(modelQuotas = [], email = null) {
 
   // 3. 계정 전환 창 열기
   template.push({
-    label: '계정 전환 창 열기',
+    label: '계정 전환',
     click: () => {
       openAccountWindow();
     }
@@ -1278,7 +1309,7 @@ function registerIpcEvents() {
     return { success: false };
   });
 
-  ipcMain.handle('switch-account', async (event, email) => {
+  ipcMain.handle('switch-account', async (event, email, passedTier) => {
     // 1. Immediately close the account window
     const isCurrent = (config.currentAccount === email);
     
@@ -1301,12 +1332,20 @@ function registerIpcEvents() {
         return { success: false, error: '계정을 찾을 수 없습니다.' };
       }
       
-      // 즉시 UI 반영 (로딩 상태)
+      const targetTier = passedTier || account.tier || null;
+      if (targetTier && account.tier !== targetTier) {
+        account.tier = targetTier;
+        saveAccounts();
+      }
+
+      // 즉시 UI 반영 (로딩 상태 및 캐시된 티어 즉시 반영)
       currentCachedEmail = email;
+      currentCachedTier = targetTier;
       if (mainWindow && !mainWindow.isDestroyed()) {
         mainWindow.webContents.send('account-status', {
           loggedIn: true,
           email: email,
+          tier: currentCachedTier,
           quotas: [],
           isLoading: true,
           config: config.global || { alertThreshold: 20, alertModels: {} },

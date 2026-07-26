@@ -9,6 +9,7 @@ const btnLaunchApp = document.getElementById('btn-launch-app');
 const textEmail = document.getElementById('account-email');
 const accountAvatar = document.getElementById('account-avatar');
 const modelsListContainer = document.getElementById('models-list');
+const accountTierBadge = document.getElementById('account-tier-badge');
 
 const inputThreshold = document.getElementById('input-threshold');
 const labelThreshold = document.getElementById('label-threshold');
@@ -351,6 +352,7 @@ window.electronAPI.onAccountStatus((data) => {
 
   if (!data.loggedIn) {
     textEmail.textContent = '안티그래비티 앱에 로그인해 주세요.';
+    if (accountTierBadge) accountTierBadge.style.display = 'none';
     currentQuotas = [];
     renderModels();
     return;
@@ -358,6 +360,26 @@ window.electronAPI.onAccountStatus((data) => {
 
   // 로그인 됨
   textEmail.textContent = data.email;
+
+  // 티어 뱃지 업데이트
+  if (accountTierBadge) {
+    if (data.tier !== undefined && data.tier !== null) {
+      const tier = String(data.tier).toUpperCase();
+      if (tier.includes('ULTRA')) {
+        accountTierBadge.textContent = 'Ultra';
+        accountTierBadge.className = 'tier-badge tier-ultra';
+        accountTierBadge.style.display = '';
+      } else if (tier.includes('PRO')) {
+        accountTierBadge.textContent = 'Pro';
+        accountTierBadge.className = 'tier-badge tier-pro';
+        accountTierBadge.style.display = '';
+      } else {
+        accountTierBadge.style.display = 'none';
+      }
+    } else {
+      accountTierBadge.style.display = 'none';
+    }
+  }
   
   currentIsLoading = !!data.isLoading;
   currentQuotas = data.quotas || [];
