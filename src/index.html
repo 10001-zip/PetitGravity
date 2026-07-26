@@ -61,7 +61,7 @@
   <main class="container">
 
     <!-- 계정 상태 카드 -->
-    <section class="card account-card">
+    <section class="card account-card" id="btn-switch-account" title="계정 전환">
       <div class="account-info-wrapper">
         <div class="avatar spinning" id="account-avatar">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
@@ -73,12 +73,12 @@
           <div class="email-text" id="account-email">안티그래비티 계정을 불러오는 중입니다.</div>
         </div>
       </div>
-      <button class="switch-btn" id="btn-switch-account" title="계정 전환">
+      <div class="account-card-overlay">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
           stroke-linecap="round" stroke-linejoin="round">
           <path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5" />
         </svg>
-      </button>
+      </div>
     </section>
 
     <!-- 모델 목록 (비어있거나 비로그인시 대체뷰) -->

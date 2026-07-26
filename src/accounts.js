@@ -183,6 +183,8 @@ async function renderAccountList(accounts) {
     return 0; // default (추가된 순서 등 원래 순서 유지)
   });
 
+  const savedScrollTop = modalAccountList ? modalAccountList.scrollTop : 0;
+
   const searchTerm = modalSearch.value.toLowerCase().trim();
   const filtered = searchTerm
     ? sortedAccounts.filter(a => a.email.toLowerCase().includes(searchTerm))
@@ -223,6 +225,8 @@ async function renderAccountList(accounts) {
           '</div>';
       });
       modelsHtml += '</div>';
+    } else {
+      modelsHtml = '<div class="account-models-loading" style="opacity: 0.5;">조회된 할당량 없음</div>';
     }
 
     let checkboxHtml = '';
@@ -301,6 +305,10 @@ async function renderAccountList(accounts) {
         window.electronAPI.switchAccount(email);
       });
     });
+  }
+
+  if (modalAccountList) {
+    modalAccountList.scrollTop = savedScrollTop;
   }
 }
 

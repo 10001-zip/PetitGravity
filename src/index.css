@@ -233,18 +233,22 @@ body {
 }
 
 .account-card {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  padding: 8px 12px;
+  padding: 12px 12px;
+  cursor: pointer;
+  transition: border-color 0.2s ease;
 }
 
 .account-info-wrapper {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
   overflow: hidden;
+  flex: 1;
+  min-width: 0;
 }
 
 .avatar {
@@ -262,6 +266,8 @@ body {
   flex-direction: column;
   gap: 2px;
   overflow: hidden;
+  flex: 1;
+  min-width: 0;
 }
 
 .status-badge {
@@ -293,7 +299,7 @@ body {
   white-space: nowrap;
   text-overflow: ellipsis;
   overflow: hidden;
-  max-width: 260px;
+  width: 100%;
 }
 
 .sync-btn {
@@ -721,25 +727,33 @@ input:checked+.toggle-slider:before {
 }
 
 /* ==================== */
-/* 계정 전환 버튼 */
+/* 계정 카드 오버레이 */
 /* ==================== */
-.switch-btn {
-  background: transparent;
-  border: none;
-  color: var(--text-secondary);
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
+.account-card-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border-radius: 16px;
+  background-color: rgba(223, 223, 223, 0);
   display: flex;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
-  transition: var(--transition-smooth);
+  color: var(--text-primary);
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.1s ease-in-out;
 }
 
-.switch-btn:hover {
-  background: #e5e5e5;
-  color: var(--text-primary);
+.account-card:hover .account-card-overlay {
+  background-color: rgba(223, 223, 223, 0.85);
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.account-card:active .account-card-overlay {
+  background-color: rgba(205, 205, 205, 0.92);
 }
 
 /* ==================== */
@@ -1225,12 +1239,12 @@ input:checked+.toggle-slider:before {
   background: transparent;
 }
 
-.account-checkbox:checked + .account-checkbox-custom {
+.account-checkbox:checked+.account-checkbox-custom {
   background: var(--text-primary, #333);
   border-color: var(--text-primary, #333);
 }
 
-.account-checkbox:checked + .account-checkbox-custom::after {
+.account-checkbox:checked+.account-checkbox-custom::after {
   content: '';
   display: block;
   width: 4px;
@@ -1249,6 +1263,19 @@ input:checked+.toggle-slider:before {
   margin-top: 8px;
   padding-top: 8px;
   border-top: 1px solid var(--border-color);
+}
+
+.account-models-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 45px;
+  font-size: 11px;
+  color: var(--text-secondary);
+  opacity: 0.7;
+  margin-top: 8px;
+  border-top: 1px solid var(--border-color);
+  text-align: center;
 }
 
 .account-model-item {
@@ -1304,14 +1331,6 @@ input:checked+.toggle-slider:before {
 
 .pct-green {
   color: var(--success-color);
-}
-
-.account-models-loading {
-  font-size: 11px;
-  color: var(--text-secondary);
-  margin-top: 6px;
-  padding-top: 6px;
-  border-top: 1px solid var(--border-color);
 }
 
 /* 삭제 확인 모달 */
@@ -1419,4 +1438,4 @@ input:checked+.toggle-slider:before {
 
 .confirm-btn.delete:hover {
   background: #dc2626;
-}
+}

@@ -8,8 +8,11 @@ const http = require('http');
 const { URL } = require('url');
 
 try {
+  const electronPath = process.platform === 'win32'
+    ? path.join(__dirname, '..', 'node_modules', 'electron', 'dist', 'electron.exe')
+    : path.join(__dirname, '..', 'node_modules', '.bin', 'electron');
   require('electron-reload')(__dirname, {
-    electron: path.join(__dirname, '..', 'node_modules', '.bin', 'electron' + (process.platform === 'win32' ? '.cmd' : ''))
+    electron: electronPath
   });
 } catch (_) { }
 
@@ -987,13 +990,15 @@ function createTray() {
 
 function openAccountWindow() {
   if (accountWindow) {
-    accountWindow.focus();
-    return;
+    if (!accountWindow.isDestroyed()) {
+      accountWindow.close();
+    }
+    accountWindow = null;
   }
 
   const bounds = config.accountWindowBounds || {};
 
-  accountWindow = new BrowserWindow({
+  const win = new BrowserWindow({
     width: bounds.width || 338, // 450 * 0.75
     height: bounds.height || 600,
     x: bounds.x,
@@ -1013,15 +1018,19 @@ function openAccountWindow() {
     show: false // Load first, then show
   });
 
-  accountWindow.loadFile(path.join(__dirname, 'accounts.html'));
+  accountWindow = win;
+
+  win.loadFile(path.join(__dirname, 'accounts.html'));
   
-  accountWindow.once('ready-to-show', () => {
-    accountWindow.show();
+  win.once('ready-to-show', () => {
+    if (win && !win.isDestroyed()) {
+      win.show();
+    }
   });
 
   const saveAccountWindowState = () => {
-    if (accountWindow && !accountWindow.isMaximized() && !accountWindow.isMinimized()) {
-      config.accountWindowBounds = accountWindow.getBounds();
+    if (win && !win.isDestroyed() && !win.isMaximized() && !win.isMinimized()) {
+      config.accountWindowBounds = win.getBounds();
       saveConfig();
     }
   };
@@ -1032,11 +1041,13 @@ function openAccountWindow() {
     boundsTimeout = setTimeout(saveAccountWindowState, 500);
   };
 
-  accountWindow.on('resize', debouncedSave);
-  accountWindow.on('move', debouncedSave);
+  win.on('resize', debouncedSave);
+  win.on('move', debouncedSave);
 
-  accountWindow.on('closed', () => {
-    accountWindow = null;
+  win.on('closed', () => {
+    if (accountWindow === win) {
+      accountWindow = null;
+    }
   });
 }
 
