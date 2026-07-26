@@ -1,6 +1,6 @@
 {
   "name": "petitgravity",
-  "version": "0.2.4",
+  "version": "0.3.0",
   "description": "Antigravity 2 Desktop app Quota monitor and notifier",
   "main": "src/main.js",
   "scripts": {
