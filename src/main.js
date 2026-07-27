@@ -28,7 +28,7 @@ const configPath = path.join(app.getPath('userData'), 'config.json');
 
 // 기본 설정 데이터 구조
 let config = {
-  global: { alertThreshold: 20, alertModels: {}, enableNotifications: true, enableWindowSnap: true },
+  global: { alertThreshold: 20, alertModels: {}, enableNotifications: true, enableWindowSnap: true, checkInterval: 1 },
   currentAccount: null, // "email"
 };
 
@@ -1421,6 +1421,8 @@ function registerIpcEvents() {
   ipcMain.handle('get-app-version', () => app.getVersion());
 
   ipcMain.handle('get-language', () => i18n.getLanguage());
+
+  ipcMain.handle('get-config', () => config.global || {});
 
   ipcMain.on('install-update', () => {
     autoUpdater.quitAndInstall();

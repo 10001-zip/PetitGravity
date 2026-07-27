@@ -53,8 +53,56 @@ if (window.electronAPI.getLanguage) {
 
 // UI 로컬 상태
 let currentQuotas = [];
-let currentConfig = { alertThreshold: 20, alertModels: {}, enableNotifications: true };
+let currentConfig = { alertThreshold: 20, alertModels: {}, enableNotifications: true, checkInterval: 1 };
 let currentIsLoading = false;
+
+function syncConfigUI(configData) {
+  if (configData) {
+    currentConfig = { ...currentConfig, ...configData };
+  }
+
+  // 토글 동기화
+  if (toggleNotifications) {
+    const isEnabled = currentConfig.enableNotifications !== false;
+    toggleNotifications.checked = isEnabled;
+    if (containerThresholdSettings) {
+      if (isEnabled) {
+        containerThresholdSettings.style.opacity = '1';
+        containerThresholdSettings.style.maxHeight = '200px';
+        containerThresholdSettings.style.pointerEvents = 'auto';
+      } else {
+        containerThresholdSettings.style.opacity = '0';
+        containerThresholdSettings.style.maxHeight = '0px';
+        containerThresholdSettings.style.pointerEvents = 'none';
+      }
+    }
+  }
+
+  if (inputCheckInterval) {
+    inputCheckInterval.value = currentConfig.checkInterval || 1;
+  }
+
+  if (toggleAlwaysOnTop) toggleAlwaysOnTop.checked = !!currentConfig.alwaysOnTop;
+  if (toggleWindowSnapping) toggleWindowSnapping.checked = currentConfig.enableSnapping !== false;
+  if (toggleRunAtStartup) toggleRunAtStartup.checked = !!currentConfig.runAtStartup;
+  if (toggleStartMinimized) toggleStartMinimized.checked = !!currentConfig.startMinimized;
+  if (toggleWindowSnap) toggleWindowSnap.checked = currentConfig.enableWindowSnap !== false;
+  if (toggleMinimizeOnClose) toggleMinimizeOnClose.checked = currentConfig.minimizeOnClose !== false;
+  if (selectLanguage && currentConfig.language) selectLanguage.value = currentConfig.language;
+  updateStartMinimizedUI();
+
+  // 슬라이더 값 동기화
+  if (inputThreshold) inputThreshold.value = currentConfig.alertThreshold || 20;
+  if (labelThreshold) labelThreshold.textContent = `${currentConfig.alertThreshold || 20}%`;
+  updateSliderFills(currentConfig.alertThreshold || 20);
+}
+
+// 저장된 설정 초기 로드
+if (window.electronAPI.getConfig) {
+  window.electronAPI.getConfig().then(cfg => {
+    if (cfg) syncConfigUI(cfg);
+  });
+}
 
 // 윈도우 창 컨트롤 이벤트 바인딩
 btnMinimize.addEventListener('click', () => {
@@ -400,42 +448,9 @@ window.electronAPI.onAccountStatus((data) => {
   
   currentIsLoading = !!data.isLoading;
   currentQuotas = data.quotas || [];
-  currentConfig = data.config || { alertThreshold: 20, alertModels: {}, enableNotifications: true };
-
-  // 토글 동기화
-  if (toggleNotifications) {
-    const isEnabled = currentConfig.enableNotifications !== false;
-    toggleNotifications.checked = isEnabled;
-    if (containerThresholdSettings) {
-      if (isEnabled) {
-        containerThresholdSettings.style.opacity = '1';
-        containerThresholdSettings.style.maxHeight = '200px';
-        containerThresholdSettings.style.pointerEvents = 'auto';
-      } else {
-        containerThresholdSettings.style.opacity = '0';
-        containerThresholdSettings.style.maxHeight = '0px';
-        containerThresholdSettings.style.pointerEvents = 'none';
-      }
-    }
+  if (data.config) {
+    syncConfigUI(data.config);
   }
-  
-  if (inputCheckInterval) {
-    inputCheckInterval.value = currentConfig.checkInterval || 1;
-  }
-  
-  if (toggleAlwaysOnTop) toggleAlwaysOnTop.checked = !!currentConfig.alwaysOnTop;
-  if (toggleWindowSnapping) toggleWindowSnapping.checked = currentConfig.enableSnapping !== false;
-  if (toggleRunAtStartup) toggleRunAtStartup.checked = !!currentConfig.runAtStartup;
-  if (toggleStartMinimized) toggleStartMinimized.checked = !!currentConfig.startMinimized;
-  if (toggleWindowSnap) toggleWindowSnap.checked = currentConfig.enableWindowSnap !== false;
-  if (toggleMinimizeOnClose) toggleMinimizeOnClose.checked = currentConfig.minimizeOnClose !== false;
-  if (selectLanguage && currentConfig.language) selectLanguage.value = currentConfig.language;
-  updateStartMinimizedUI();
-
-  // 슬라이더 값 동기화
-  inputThreshold.value = currentConfig.alertThreshold;
-  labelThreshold.textContent = `${currentConfig.alertThreshold}%`;
-  updateSliderFills(currentConfig.alertThreshold);
 
   renderModels();
 });
@@ -503,6 +518,7 @@ const settingsModalOverlay = document.getElementById('settings-modal-overlay');
 const btnCloseSettingsModal = document.getElementById('btn-close-settings-modal');
 
 function openSettingsModal() {
+  syncConfigUI();
   settingsModalOverlay.style.display = 'flex';
   requestAnimationFrame(() => {
     settingsModalOverlay.classList.add('active');
