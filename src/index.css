@@ -375,6 +375,7 @@ body {
   display: inline-block;
   width: 36px;
   height: 20px;
+  flex-shrink: 0;
 }
 
 .toggle-switch input {
@@ -420,6 +421,12 @@ input:checked+.toggle-slider:before {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 12px;
+}
+
+.settings-header select,
+.settings-header input {
+  flex-shrink: 0;
 }
 
 .settings-header h3 {
