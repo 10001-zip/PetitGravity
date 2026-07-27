@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="ko" id="html-root">
 
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>계정 목록</title>
+  <title data-i18n="accounts_title">계정 목록</title>
   <link rel="stylesheet" href="index.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -45,10 +45,10 @@
   <!-- 커스텀 타이틀바 -->
   <header class="titlebar">
     <div class="titlebar-drag-region">
-      <span class="app-title">계정 목록</span>
+      <span class="app-title" data-i18n="accounts_title">계정 목록</span>
     </div>
     <div class="titlebar-controls">
-      <button class="control-btn" id="btn-close-window" title="닫기">
+      <button class="control-btn" id="btn-close-window" data-i18n-title="btn_close_window">
         <svg width="12" height="12" viewBox="0 0 12 12">
           <path d="M2.5 2.5 L9.5 9.5 M9.5 2.5 L2.5 9.5" stroke="currentColor" stroke-width="1.2" fill="none" />
         </svg>
@@ -65,7 +65,7 @@
     </div>
     <!-- 상단 툴바(헤더) -->
     <div class="modal-header">
-      <button class="modal-action-btn" id="btn-add-account" title="계정 추가">
+      <button class="modal-action-btn" id="btn-add-account" data-i18n-title="btn_add_account">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
           stroke-linecap="round">
           <line x1="12" y1="5" x2="12" y2="19" />
@@ -73,7 +73,7 @@
         </svg>
       </button>
       <div style="position: relative;">
-        <button class="modal-action-btn" id="btn-sort-accounts" title="정렬">
+        <button class="modal-action-btn" id="btn-sort-accounts" data-i18n-title="btn_sort">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
             stroke-linecap="round" stroke-linejoin="round">
             <line x1="4" y1="6" x2="20" y2="6" />
@@ -82,16 +82,16 @@
           </svg>
         </button>
         <div class="sort-context-menu" id="sort-context-menu">
-          <div class="sort-menu-item" data-sort="asc">오름차순</div>
-          <div class="sort-menu-item" data-sort="desc">내림차순</div>
-          <div class="sort-menu-item" data-sort="tier-high">계정 티어 높은 순</div>
-          <div class="sort-menu-item" data-sort="tier-low">계정 티어 낮은 순</div>
-          <div class="sort-menu-item" data-sort="tokens-high">토큰 많은 순</div>
-          <div class="sort-menu-item" data-sort="tokens-low">토큰 적은 순</div>
-          <div class="sort-menu-item" data-sort="gemini-high">Gemini 많은 순</div>
-          <div class="sort-menu-item" data-sort="gemini-low">Gemini 적은 순</div>
-          <div class="sort-menu-item" data-sort="claude-gpt-high">Claude&amp;GPT 많은 순</div>
-          <div class="sort-menu-item" data-sort="claude-gpt-low">Claude&amp;GPT 적은 순</div>
+          <div class="sort-menu-item" data-sort="asc" data-i18n="sort_asc">오름차순</div>
+          <div class="sort-menu-item" data-sort="desc" data-i18n="sort_desc">내림차순</div>
+          <div class="sort-menu-item" data-sort="tier-high" data-i18n="sort_tier_high">계정 티어 높은 순</div>
+          <div class="sort-menu-item" data-sort="tier-low" data-i18n="sort_tier_low">계정 티어 낙은 순</div>
+          <div class="sort-menu-item" data-sort="tokens-high" data-i18n="sort_tokens_high">토큰 많은 순</div>
+          <div class="sort-menu-item" data-sort="tokens-low" data-i18n="sort_tokens_low">토큰 적은 순</div>
+          <div class="sort-menu-item" data-sort="gemini-high" data-i18n="sort_gemini_high">Gemini 많은 순</div>
+          <div class="sort-menu-item" data-sort="gemini-low" data-i18n="sort_gemini_low">Gemini 적은 순</div>
+          <div class="sort-menu-item" data-sort="claude-gpt-high" data-i18n="sort_claude_gpt_high">Claude&amp;GPT 많은 순</div>
+          <div class="sort-menu-item" data-sort="claude-gpt-low" data-i18n="sort_claude_gpt_low">Claude&amp;GPT 적은 순</div>
         </div>
       </div>
       <div class="modal-search-wrapper">
@@ -100,8 +100,8 @@
           <circle cx="11" cy="11" r="8" />
           <path d="M21 21l-4.35-4.35" />
         </svg>
-        <input type="text" class="modal-search" id="modal-search" placeholder="검색...">
-        <button class="modal-search-clear" id="btn-search-clear" style="display: none;" title="검색어 지우기">
+        <input type="text" class="modal-search" id="modal-search" data-i18n-placeholder="accounts_search_placeholder" placeholder="검색...">
+        <button class="modal-search-clear" id="btn-search-clear" style="display: none;" data-i18n-title="btn_clear_search">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
             stroke-linecap="round">
             <line x1="18" y1="6" x2="6" y2="18" />
@@ -109,14 +109,14 @@
           </svg>
         </button>
       </div>
-      <button class="modal-action-btn" id="btn-edit-accounts" title="편집">
+      <button class="modal-action-btn" id="btn-edit-accounts" data-i18n-title="btn_edit">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>
       </button>
     </div>
     <!-- 계정 리스트 -->
     <div class="modal-account-list" id="modal-account-list">
       <div class="empty-state">
-        <p>등록된 계정이 없습니다. 상단의 + 버튼으로 계정을 추가해 주세요.</p>
+        <p data-i18n="accounts_empty">등록된 계정이 없습니다. 상단의 + 버튼으로 계정을 추가해 주세요.</p>
       </div>
     </div>
   </div>
@@ -125,16 +125,17 @@
   <div class="confirm-modal-overlay" id="confirm-modal" style="display: none;">
     <div class="confirm-modal-content">
       <div class="confirm-modal-body">
-        <h3>계정 삭제</h3>
-        <p id="confirm-modal-text">선택한 계정을 삭제하시겠습니까?</p>
+        <h3 data-i18n="confirm_delete_title">계정 삭제</h3>
+        <p id="confirm-modal-text" data-i18n="confirm_delete_single">선택한 계정을 삭제하시겠습니까?</p>
       </div>
       <div class="confirm-modal-actions">
-        <button class="confirm-btn cancel" id="confirm-btn-cancel">취소</button>
-        <button class="confirm-btn delete" id="confirm-btn-delete">삭제</button>
+        <button class="confirm-btn cancel" id="confirm-btn-cancel" data-i18n="confirm_cancel">취소</button>
+        <button class="confirm-btn delete" id="confirm-btn-delete" data-i18n="confirm_delete">삭제</button>
       </div>
     </div>
   </div>
 
+  <script src="i18n.js"></script>
   <script src="accounts.js"></script>
 </body>
 

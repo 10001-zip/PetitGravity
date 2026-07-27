@@ -6,6 +6,7 @@ const fs = require('fs');
 const { exec } = require('child_process');
 const http = require('http');
 const { URL } = require('url');
+const i18n = require('./i18n');
 
 try {
   const electronPath = process.platform === 'win32'
@@ -642,7 +643,7 @@ async function startOAuthFlow() {
         `&access_type=offline` +
         `&prompt=consent`;
       shell.openExternal(authUrl);
-      const timeout = setTimeout(() => { server.close(); reject(new Error('OAuth 타임아웃')); }, 180000);
+      const timeout = setTimeout(() => { server.close(); reject(new Error('OAuth timeout')); }, 180000);
       server.on('request', async (req, res) => {
         const reqUrl = new URL(req.url, `http://127.0.0.1:${port}`);
         if (reqUrl.pathname !== '/oauth-callback') { res.writeHead(404); res.end(); return; }
@@ -651,11 +652,11 @@ async function startOAuthFlow() {
         const error = reqUrl.searchParams.get('error');
         if (error || !code || returnedState !== state) {
           res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
-          res.end('<html><body style="font-family:sans-serif;text-align:center;padding:50px"><h1 style="color:red">❌ 인증 실패</h1><p>창을 닫고 다시 시도해 주세요.</p><script>setTimeout(()=>window.close(),2000)</script></body></html>');
-          clearTimeout(timeout); server.close(); reject(new Error(error || '인증 실패')); return;
+          res.end(`<html><body style="font-family:sans-serif;text-align:center;padding:50px"><h1 style="color:red">${i18n.t('oauth_auth_fail_title')}</h1><p>${i18n.t('oauth_auth_fail_body')}</p><script>setTimeout(()=>window.close(),2000)</script></body></html>`);
+          clearTimeout(timeout); server.close(); reject(new Error(error || 'auth failed')); return;
         }
         res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
-        res.end('<html><body style="font-family:sans-serif;text-align:center;padding:50px"><h1 style="color:green">✅ 인증 성공!</h1><p>이 창을 닫아도 됩니다.</p><script>setTimeout(()=>window.close(),2000)</script></body></html>');
+        res.end(`<html><body style="font-family:sans-serif;text-align:center;padding:50px"><h1 style="color:green">${i18n.t('oauth_auth_success_title')}</h1><p>${i18n.t('oauth_auth_success_body')}</p><script>setTimeout(()=>window.close(),2000)</script></body></html>`);
         clearTimeout(timeout); server.close();
         try {
           const params = new URLSearchParams();
@@ -954,14 +955,14 @@ function updateTrayMenu(modelQuotas = [], email = null) {
           });
       }
     } else {
-      template.push({ label: '할당량 정보 없음', enabled: false });
+      template.push({ label: i18n.t('tray_no_quota'), enabled: false });
     }
     template.push({ type: 'separator' });
   }
 
   // 2. 대시보드 열기
   template.push({
-    label: '대시보드 열기',
+    label: i18n.t('tray_open_dashboard'),
     click: () => {
       if (mainWindow) mainWindow.show();
     }
@@ -969,7 +970,7 @@ function updateTrayMenu(modelQuotas = [], email = null) {
 
   // 3. 계정 전환 창 열기
   template.push({
-    label: '계정 전환',
+    label: i18n.t('tray_switch_account'),
     click: () => {
       openAccountWindow();
     }
@@ -977,7 +978,7 @@ function updateTrayMenu(modelQuotas = [], email = null) {
 
   // 4. 할당량 즉시 동기화
   template.push({
-    label: '할당량 즉시 동기화',
+    label: i18n.t('tray_sync_quota'),
     click: () => {
       checkAndUpdateQuota();
     }
@@ -985,9 +986,9 @@ function updateTrayMenu(modelQuotas = [], email = null) {
 
   template.push({ type: 'separator' });
 
-  // 4. 종료
+  // 5. 종료
   template.push({
-    label: '종료',
+    label: i18n.t('tray_quit'),
     click: () => {
       isQuitting = true;
       app.quit();
@@ -1036,7 +1037,7 @@ function openAccountWindow() {
     y: bounds.y,
     minWidth: 300,
     minHeight: 400,
-    title: '계정 관리',
+    title: i18n.t('accounts_title'),
     icon: path.join(__dirname, 'assets', 'icon_rounded.png'),
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
@@ -1168,7 +1169,7 @@ function registerSnapHandlers(win) {
 // IPC 통신 이벤트 등록
 function registerIpcEvents() {
   // UI로부터 설정 변경 수신
-  ipcMain.on('update-config', (event, { checkInterval, modelName, isMonitored, threshold, models, enableNotifications, alwaysOnTop, runAtStartup, startMinimized, enableWindowSnap, enableSnapping, minimizeOnClose }) => {
+  ipcMain.on('update-config', (event, { checkInterval, modelName, isMonitored, threshold, models, enableNotifications, alwaysOnTop, runAtStartup, startMinimized, enableWindowSnap, enableSnapping, minimizeOnClose, language }) => {
     if (!config.global) {
       config.global = { alertThreshold: 20, alertModels: {}, enableNotifications: true, enableWindowSnap: true, enableSnapping: true, checkInterval: 1 };
     }
@@ -1227,6 +1228,15 @@ function registerIpcEvents() {
 
     if (minimizeOnClose !== undefined) {
       accountConfig.minimizeOnClose = minimizeOnClose;
+    }
+
+    if (language !== undefined) {
+      accountConfig.language = language;
+      i18n.setLanguage(language);
+      updateTrayMenu(
+        (currentCachedEmail && lastCheckedAccessToken) ? [] : [],
+        currentCachedEmail || null
+      );
     }
 
     if (models && Array.isArray(models)) {
@@ -1315,7 +1325,7 @@ function registerIpcEvents() {
     
     if (mainWindow && !mainWindow.isDestroyed()) {
       mainWindow.webContents.send('show-snackbar', { 
-        message: isCurrent ? '안티그래비티 재실행 중...' : `${email} 계정으로 전환 중...`, 
+        message: isCurrent ? i18n.t('restarting_app') : `${email} ${i18n.t('switching_to')}`, 
         type: 'info',
         isHtml: false
       });
@@ -1328,8 +1338,8 @@ function registerIpcEvents() {
     try {
       const account = accounts.find(a => a.email === email);
       if (!account) {
-        if (mainWindow) mainWindow.webContents.send('show-snackbar', { message: '계정 전환 실패: 계정을 찾을 수 없습니다.', type: 'error' });
-        return { success: false, error: '계정을 찾을 수 없습니다.' };
+        if (mainWindow) mainWindow.webContents.send('show-snackbar', { message: i18n.t('switch_failed_not_found'), type: 'error' });
+        return { success: false, error: i18n.t('switch_failed_not_found') };
       }
       
       const targetTier = passedTier || account.tier || null;
@@ -1374,8 +1384,8 @@ function registerIpcEvents() {
       });
       const writeSuccess = await writeWindowsCredential(credPayload);
       if (!writeSuccess) {
-        if (mainWindow) mainWindow.webContents.send('show-snackbar', { message: '계정 전환 실패: 자격 증명 쓰기 실패', type: 'error' });
-        return { success: false, error: '자격 증명 쓰기 실패' };
+        if (mainWindow) mainWindow.webContents.send('show-snackbar', { message: i18n.t('switch_failed_cred'), type: 'error' });
+        return { success: false, error: i18n.t('switch_failed_cred') };
       }
       
       await restartAntigravityProcess();
@@ -1386,7 +1396,7 @@ function registerIpcEvents() {
       
       if (mainWindow && !mainWindow.isDestroyed()) {
         mainWindow.webContents.send('show-snackbar', { 
-          message: isCurrent ? '안티그래비티가 재실행되었습니다.' : `${email} 계정으로 전환되었습니다.`, 
+          message: isCurrent ? i18n.t('restarted_app') : `${email} ${i18n.t('switched_to')}`, 
           type: 'success',
           isHtml: false
         });
@@ -1397,7 +1407,7 @@ function registerIpcEvents() {
     } catch (err) {
       console.error('계정 전환 실패:', err);
       if (mainWindow && !mainWindow.isDestroyed()) {
-        mainWindow.webContents.send('show-snackbar', { message: '계정 전환 실패: ' + err.message, type: 'error' });
+        mainWindow.webContents.send('show-snackbar', { message: i18n.t('switch_failed') + err.message, type: 'error' });
       }
       return { success: false, error: err.message };
     }
@@ -1409,6 +1419,8 @@ function registerIpcEvents() {
   });
 
   ipcMain.handle('get-app-version', () => app.getVersion());
+
+  ipcMain.handle('get-language', () => i18n.getLanguage());
 
   ipcMain.on('install-update', () => {
     autoUpdater.quitAndInstall();
@@ -1432,6 +1444,21 @@ if (!gotTheLock) {
   app.whenReady().then(() => {
     loadConfig();
     loadAccounts();
+
+    // OS 언어 감지 → config에 저장된 언어 없으면 자동 설정
+    {
+      const savedLang = config.global && config.global.language;
+      if (savedLang) {
+        i18n.setLanguage(savedLang);
+      } else {
+        const osLocale = app.getLocale() || '';
+        const detectedLang = osLocale.startsWith('ko') ? 'ko' : 'en';
+        i18n.setLanguage(detectedLang);
+        if (!config.global) config.global = { alertThreshold: 20, alertModels: {}, enableNotifications: true, enableWindowSnap: true };
+        config.global.language = detectedLang;
+        saveConfig();
+      }
+    }
 
     // 자동 업데이트 설정
     autoUpdater.logger = log;

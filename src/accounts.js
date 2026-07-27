@@ -2,6 +2,9 @@
 // 계정 관리 로직 (accounts.html 전용)
 // ============================================================
 
+// i18n 단축 별칭
+const { t, setLanguage, getLanguage, applyI18n } = window.i18n;
+
 const btnCloseWindow = document.getElementById('btn-close-window');
 const modalContainer = document.getElementById('modal-container');
 const modalSearch = document.getElementById('modal-search');
@@ -45,6 +48,18 @@ function showSnackbar(message, type, isHtml = false) {
 
 function hideSnackbar() {
   modalSnackbar.className = 'modal-snackbar';
+}
+
+// i18n 초기화
+if (window.electronAPI && window.electronAPI.getLanguage) {
+  window.electronAPI.getLanguage().then(lang => {
+    setLanguage(lang || 'ko');
+    applyI18n();
+    const htmlRoot = document.getElementById('html-root') || document.documentElement;
+    htmlRoot.lang = lang || 'ko';
+  });
+} else {
+  applyI18n();
 }
 
 function showConfirm(message) {
@@ -208,7 +223,7 @@ async function renderAccountList(accounts) {
 
   if (filtered.length === 0) {
     modalAccountList.innerHTML = '<div class="empty-state"><p>' +
-      (searchTerm ? '검색 결과가 없습니다.' : '등록된 계정이 없습니다. 상단의 + 버튼으로 계정을 추가해 주세요.') +
+      (searchTerm ? t('accounts_search_empty') : t('accounts_empty')) +
       '</p></div>';
     return;
   }
@@ -227,7 +242,7 @@ async function renderAccountList(accounts) {
     let modelsHtml = '';
     if (monitoredQuotas === null) {
       modelsHtml = '<div class="account-models">' +
-        '<div class="account-models-loading-overlay">할당량 조회 중...</div>' +
+        '<div class="account-models-loading-overlay">' + t('accounts_loading') + '</div>' +
         '<div class="account-model-item" style="visibility: hidden;"><span class="account-model-name">Gemini Models</span></div>' +
         '<div class="account-model-item" style="visibility: hidden;"><span class="account-model-name">Claude and GPT models</span></div>' +
         '</div>';
@@ -247,7 +262,7 @@ async function renderAccountList(accounts) {
       modelsHtml += '</div>';
     } else {
       modelsHtml = '<div class="account-models">' +
-        '<div class="account-models-loading-overlay" style="opacity: 0.5;">조회된 할당량 없음</div>' +
+        '<div class="account-models-loading-overlay" style="opacity: 0.5;">' + t('accounts_no_quota') + '</div>' +
         '<div class="account-model-item" style="visibility: hidden;"><span class="account-model-name">Gemini Models</span></div>' +
         '<div class="account-model-item" style="visibility: hidden;"><span class="account-model-name">Claude and GPT models</span></div>' +
         '</div>';
@@ -264,16 +279,16 @@ async function renderAccountList(accounts) {
 
     let actionBtn = '';
     if (modalEditMode) {
-      actionBtn = '<button class="account-item-action delete-btn" data-email="' + account.email + '" title="삭제">' +
+      actionBtn = '<button class="account-item-action delete-btn" data-email="' + account.email + '" data-i18n-title="btn_account_delete" title="' + t('btn_account_delete') + '">' +
         '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">' +
         '<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>';
     } else {
       if (account.email !== currentEmail) {
-        actionBtn = '<button class="account-item-action switch-action-btn" data-email="' + account.email + '" title="전환">' +
+        actionBtn = '<button class="account-item-action switch-action-btn" data-email="' + account.email + '" title="' + t('btn_account_switch') + '">' +
           '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
           '<path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5" /></svg></button>';
       } else {
-        actionBtn = '<button class="account-item-action switch-action-btn" data-email="' + account.email + '" title="재실행">' +
+        actionBtn = '<button class="account-item-action switch-action-btn" data-email="' + account.email + '" title="' + t('btn_account_restart') + '">' +
           '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
           '<path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67" /></svg></button>';
       }
@@ -305,16 +320,16 @@ async function renderAccountList(accounts) {
     modalAccountList.querySelectorAll('.delete-btn').forEach(btn => {
       btn.addEventListener('click', async (e) => {
         const email = e.currentTarget.dataset.email;
-        const isConfirmed = await showConfirm(`'${email}' 계정을 삭제하시겠습니까?`);
+        const isConfirmed = await showConfirm(`'${email}' ${t('confirm_delete_single')}`);
         if (!isConfirmed) return;
         
         const result = await window.electronAPI.deleteAccount(email);
         if (result.success) {
           selectedAccounts.delete(email);
-          showSnackbar(email + ' 계정이 삭제되었습니다.', 'success');
+          showSnackbar(email + ' ' + t('accounts_deleted'), 'success');
           loadAndRenderAccounts();
         } else {
-          showSnackbar('계정 삭제에 실패했습니다.', 'error');
+          showSnackbar(t('accounts_delete_failed'), 'error');
         }
       });
     });
@@ -365,7 +380,7 @@ snackbarClose.addEventListener('click', hideSnackbar);
 modalSnackbar.addEventListener('click', async (e) => {
   if (e.target.classList.contains('switch-new-account-link')) {
     const email = e.target.dataset.email;
-    e.target.textContent = '전환 중...';
+    e.target.textContent = t('accounts_switching');
     e.target.style.pointerEvents = 'none';
     e.target.style.opacity = '0.7';
     
@@ -375,20 +390,20 @@ modalSnackbar.addEventListener('click', async (e) => {
 });
 
 async function handleAddAccount() {
-  showSnackbar('브라우저에서 로그인을 진행해 주세요.', 'success');
+  showSnackbar(t('accounts_login_please'), 'success');
   
   const result = await window.electronAPI.addAccount();
   
   if (result.success) {
     if (result.alreadyExists) {
       showSnackbar(
-        `${result.account.email} 은(는) 이미 등록되어 있는 계정입니다. <span class="switch-new-account-link" data-email="${result.account.email}" style="text-decoration: underline; cursor: pointer; margin-left: 10px; font-weight: 500;">바로 전환</span>`,
+        `${result.account.email} ${t('accounts_already_exists')} <span class="switch-new-account-link" data-email="${result.account.email}" style="text-decoration: underline; cursor: pointer; margin-left: 10px; font-weight: 500;">${t('accounts_switch_now')}</span>`,
         'warning',
         true
       );
     } else {
       showSnackbar(
-        `${result.account.email} 계정이 추가되었습니다. <span class="switch-new-account-link" data-email="${result.account.email}" style="text-decoration: underline; cursor: pointer; margin-left: 10px; font-weight: 500;">바로 전환</span>`,
+        `${result.account.email} ${t('accounts_added')} <span class="switch-new-account-link" data-email="${result.account.email}" style="text-decoration: underline; cursor: pointer; margin-left: 10px; font-weight: 500;">${t('accounts_switch_now')}</span>`,
         'success',
         true
       );
@@ -399,10 +414,10 @@ async function handleAddAccount() {
       newItem.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
   } else {
-    if (result.error && result.error.includes('타임아웃')) {
+    if (result.error && result.error.includes('timeout')) {
       // 무시
     } else {
-      showSnackbar('계정 추가 실패: ' + (result.error || '알 수 없는 오류'), 'error');
+      showSnackbar(t('accounts_add_failed') + (result.error || ''), 'error');
     }
   }
 }
@@ -413,7 +428,7 @@ function updateSelectAllButton() {
   const checkboxes = modalAccountList.querySelectorAll('.account-checkbox');
   const allChecked = checkboxes.length > 0 && [...checkboxes].every(cb => cb.checked);
   btnAddAccount.innerHTML = allChecked ? iconSelectAll : iconDeselectAll;
-  btnAddAccount.title = allChecked ? '전체 해제' : '전체 선택';
+  btnAddAccount.title = allChecked ? t('btn_deselect_all') : t('btn_select_all');
   if (modalEditMode) {
     btnSortAccounts.disabled = selectedAccounts.size === 0;
   }
@@ -438,30 +453,30 @@ btnEditAccounts.addEventListener('click', async () => {
   modalEditMode = !modalEditMode;
   if (modalEditMode) {
     btnEditAccounts.innerHTML = iconCheck;
-    btnEditAccounts.title = '완료';
+    btnEditAccounts.title = t('btn_done');
     // 추가 버튼을 전체 선택/해제 버튼으로 전환
     btnAddAccount.innerHTML = iconDeselectAll;
-    btnAddAccount.title = '전체 선택';
+    btnAddAccount.title = t('btn_select_all');
     btnAddAccount.removeEventListener('click', handleAddAccount);
     btnAddAccount.addEventListener('click', toggleSelectAll);
     // 정렬 버튼을 삭제 버튼으로 전환
     btnSortAccounts.innerHTML = iconTrash;
-    btnSortAccounts.title = '선택 항목 삭제';
+    btnSortAccounts.title = t('btn_delete_selected');
     btnSortAccounts.classList.add('delete-mode');
     btnSortAccounts.disabled = selectedAccounts.size === 0;
     btnSortAccounts.removeEventListener('click', handleSortMenu);
     btnSortAccounts.addEventListener('click', handleDeleteSelected);
   } else {
     btnEditAccounts.innerHTML = iconEdit;
-    btnEditAccounts.title = '편집';
+    btnEditAccounts.title = t('btn_edit');
     // 전체 선택 버튼을 추가 버튼으로 복원
     btnAddAccount.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>';
-    btnAddAccount.title = '계정 추가';
+    btnAddAccount.title = t('btn_add_account');
     btnAddAccount.removeEventListener('click', toggleSelectAll);
     btnAddAccount.addEventListener('click', handleAddAccount);
     // 삭제 버튼을 정렬 버튼으로 복원
     btnSortAccounts.innerHTML = iconSort;
-    btnSortAccounts.title = '정렬';
+    btnSortAccounts.title = t('btn_sort');
     btnSortAccounts.classList.remove('delete-mode');
     btnSortAccounts.disabled = false;
     btnSortAccounts.removeEventListener('click', handleDeleteSelected);
@@ -501,7 +516,7 @@ function handleSortMenu(e) {
 async function handleDeleteSelected() {
   if (selectedAccounts.size === 0) return;
   
-  const isConfirmed = await showConfirm(`선택한 ${selectedAccounts.size}개의 계정을 정말 삭제하시겠습니까?`);
+  const isConfirmed = await showConfirm(`${t('confirm_delete_multi_prefix')}${selectedAccounts.size}${t('confirm_delete_multi_suffix')}`);
   if (!isConfirmed) return;
 
   const emails = Array.from(selectedAccounts);
@@ -518,7 +533,7 @@ async function handleDeleteSelected() {
     }
   }
   selectedAccounts.clear();
-  showSnackbar(`${successCount}개의 계정이 삭제되었습니다.`, 'success');
+  showSnackbar(`${successCount}${t('accounts_multi_deleted')}`, 'success');
   btnSortAccounts.innerHTML = iconTrash;
   btnSortAccounts.disabled = true;
   loadAndRenderAccounts();

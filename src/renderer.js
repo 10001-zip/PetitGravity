@@ -1,3 +1,6 @@
+// i18n 단축 별칭
+const { t, setLanguage, getLanguage, applyI18n } = window.i18n;
+
 // DOM 엘리먼트 획득
 const btnMinimize = document.getElementById('btn-minimize');
 const btnClose = document.getElementById('btn-close');
@@ -25,6 +28,7 @@ const containerStartMinimized = document.getElementById('container-start-minimiz
 const toggleWindowSnapping = document.getElementById('toggle-window-snapping');
 const toggleWindowSnap = document.getElementById('toggle-window-snap');
 const toggleMinimizeOnClose = document.getElementById('toggle-minimize-on-close');
+const selectLanguage = document.getElementById('select-language');
 
 // 앱 버전 표시
 if (window.electronAPI.getAppVersion) {
@@ -32,6 +36,19 @@ if (window.electronAPI.getAppVersion) {
     const el = document.getElementById('app-version-display');
     if (el) el.textContent = `v${version}`;
   });
+}
+
+// i18n 초기화: main process에서 현재 언어 가져와서 적용
+if (window.electronAPI.getLanguage) {
+  window.electronAPI.getLanguage().then(lang => {
+    setLanguage(lang || 'ko');
+    applyI18n();
+    const htmlRoot = document.getElementById('html-root') || document.documentElement;
+    htmlRoot.lang = lang || 'ko';
+    if (selectLanguage) selectLanguage.value = lang || 'ko';
+  });
+} else {
+  applyI18n();
 }
 
 // UI 로컬 상태
@@ -163,7 +180,7 @@ if (inputCheckInterval) {
     if (value < 1) {
       value = 1;
       e.target.value = 1;
-      showSnackbar('최소 체크 주기는 1분입니다.', 'warning');
+      showSnackbar(t('snackbar_min_interval'), 'warning');
     }
     
     currentConfig.checkInterval = value;
@@ -275,7 +292,7 @@ function renderModels() {
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--text-secondary); animation: spin 0.8s linear infinite;">
           <path d="M21 12a9 9 0 1 1-6.219-8.56"></path>
         </svg>
-        <p>서버에서 계정 할당량 정보를 받아오는 중입니다...</p>
+        <p>${t('models_loading')}</p>
       </div>
     `;
     return;
@@ -284,7 +301,7 @@ function renderModels() {
   if (currentQuotas.length === 0) {
     modelsListContainer.innerHTML = `
       <div class="empty-state">
-        <p>조회된 모델 정보가 없습니다. 안티그래비티 앱이 켜져 있고 로그인되어 있는지 확인해 주세요.</p>
+        <p>${t('models_empty')}</p>
       </div>
     `;
     return;
@@ -351,7 +368,7 @@ window.electronAPI.onAccountStatus((data) => {
   }
 
   if (!data.loggedIn) {
-    textEmail.textContent = '안티그래비티 앱에 로그인해 주세요.';
+    textEmail.textContent = t('account_not_logged_in');
     if (accountTierBadge) accountTierBadge.style.display = 'none';
     currentQuotas = [];
     renderModels();
@@ -412,6 +429,7 @@ window.electronAPI.onAccountStatus((data) => {
   if (toggleStartMinimized) toggleStartMinimized.checked = !!currentConfig.startMinimized;
   if (toggleWindowSnap) toggleWindowSnap.checked = currentConfig.enableWindowSnap !== false;
   if (toggleMinimizeOnClose) toggleMinimizeOnClose.checked = currentConfig.minimizeOnClose !== false;
+  if (selectLanguage && currentConfig.language) selectLanguage.value = currentConfig.language;
   updateStartMinimizedUI();
 
   // 슬라이더 값 동기화
@@ -614,9 +632,22 @@ if (btnCloseUpdateModal) {
 
 if (btnUpdateNow) {
   btnUpdateNow.addEventListener('click', () => {
-    btnUpdateNow.textContent = '설치 중...';
+    btnUpdateNow.textContent = t('update_installing');
     btnUpdateNow.style.opacity = '0.7';
     btnUpdateNow.disabled = true;
     window.electronAPI.installUpdate();
+  });
+}
+
+// 언어 드롭다운 변경 핸들러
+if (selectLanguage) {
+  selectLanguage.addEventListener('change', (e) => {
+    const lang = e.target.value;
+    setLanguage(lang);
+    applyI18n();
+    const htmlRoot = document.getElementById('html-root') || document.documentElement;
+    htmlRoot.lang = lang;
+    renderModels(); // 동적으로 생성된 텍스트 갱신
+    window.electronAPI.updateConfig({ language: lang });
   });
 }

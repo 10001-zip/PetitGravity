@@ -41,6 +41,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   switchAccount: (email, tier) => ipcRenderer.invoke('switch-account', email, tier),
   fetchAllQuotas: () => ipcRenderer.invoke('fetch-all-quotas'),
   getAppVersion: () => ipcRenderer.invoke('get-app-version'),
+  getLanguage: () => ipcRenderer.invoke('get-language'),
   onUpdateReady: (callback) => ipcRenderer.on('update-ready', callback),
   onUpdateDownloading: (callback) => ipcRenderer.on('update-downloading', callback),
   installUpdate: () => ipcRenderer.send('install-update'),
