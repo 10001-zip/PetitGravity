@@ -776,7 +776,7 @@ input:checked+.toggle-slider:before {
   right: 0;
   bottom: 0;
   border-radius: 16px;
-  background-color: rgba(243, 243, 243, 0);
+  background-color: rgba(219, 219, 219, 0);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -787,13 +787,13 @@ input:checked+.toggle-slider:before {
 }
 
 .account-card:hover .account-card-overlay {
-  background-color: rgba(243, 243, 243, 0.8);
+  background-color: rgba(219, 219, 219, 0.8);
   opacity: 1;
   pointer-events: auto;
 }
 
 .account-card:active .account-card-overlay {
-  background-color: rgba(215, 215, 215, 0.92);
+  background-color: rgba(205, 205, 205, 0.92);
   transition: none;
 }
 
