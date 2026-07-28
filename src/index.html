@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link
-    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Outfit:wght@400;500;600;700&display=swap"
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap"
     rel="stylesheet">
 </head>
 
@@ -102,26 +102,21 @@
   <!-- 환경 설정 모달 -->
   <div class="modal-overlay" id="settings-modal-overlay">
     <div class="modal-container" id="settings-modal-container">
-      <!-- 모달 헤더 -->
-      <div class="modal-header" style="border-bottom: none;">
+      <button class="modal-close-btn" id="btn-close-settings-modal" data-i18n-title="btn_close">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round">
+          <line x1="18" y1="6" x2="6" y2="18" />
+          <line x1="6" y1="6" x2="18" y2="18" />
+        </svg>
+      </button>
+      <!-- 모달 콘텐츠 -->
+      <div class="modal-account-list" style="padding: 12px 16px 16px 16px;">
         <div
-          style="flex: 1; font-family: var(--font-title); font-size: 18px; font-weight: 700; padding-left: 8px; display: flex; align-items: baseline; gap: 8px;">
+          style="font-family: var(--font-title); font-size: 18px; font-weight: 700; padding: 2px 0 8px 0; display: flex; align-items: baseline; gap: 8px;">
           <span data-i18n="settings_title">설정</span>
           <span id="app-version-display"
             style="font-size: 12px; font-weight: 400; color: var(--text-secondary); opacity: 0.7;"></span>
         </div>
-        <div class="modal-actions">
-          <button class="modal-action-btn" id="btn-close-settings-modal" data-i18n-title="btn_close">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-              stroke-linecap="round">
-              <line x1="18" y1="6" x2="6" y2="18" />
-              <line x1="6" y1="6" x2="18" y2="18" />
-            </svg>
-          </button>
-        </div>
-      </div>
-      <!-- 모달 콘텐츠 -->
-      <div class="modal-account-list" style="padding: 8px 16px 16px 16px;">
         <section class="card settings-card"
           style="border: none; box-shadow: none; padding: 0; background: transparent;">
           <div class="settings-section-title" data-i18n="settings_section_general">일반</div>
@@ -302,8 +297,7 @@
           <span data-i18n="update_title">업데이트 알림</span>
         </div>
           <div class="modal-actions">
-          <button class="modal-action-btn" id="btn-close-update-modal" data-i18n-title="btn_close"
-            style="width: 28px; height: 28px; border: none; padding: 0;">
+          <button class="modal-close-btn" id="btn-close-update-modal" data-i18n-title="btn_close">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
               stroke-linecap="round">
               <line x1="18" y1="6" x2="6" y2="18" />

@@ -361,7 +361,7 @@ body {
 }
 
 .settings-section-title {
-  font-family: var(--font-title);
+  font-family: var(--font-body);
   font-size: 16px;
   font-weight: 700;
   color: var(--text-primary);
@@ -432,7 +432,7 @@ input:checked+.toggle-slider:before {
 .settings-header h3 {
   font-family: var(--font-body);
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 500;
   color: var(--text-primary);
 }
 
@@ -821,6 +821,7 @@ input:checked+.toggle-slider:before {
 }
 
 .modal-container {
+  position: relative;
   width: calc(100% - 20px);
   height: calc(100% - 20px);
   border-radius: 16px;
@@ -913,7 +914,7 @@ input:checked+.toggle-slider:before {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 10px 10px 8px 10px;
+  padding: 6px 6px 6px 10px;
   border-bottom: 1px solid var(--border-color);
 }
 
@@ -1143,11 +1144,30 @@ input:checked+.toggle-slider:before {
   border-color: #b0b0b0;
 }
 
-#btn-close-modal,
-#btn-close-settings-modal {
-  width: 32px;
+.modal-close-btn {
+  width: 28px;
+  height: 28px;
   padding: 0;
   border: none;
+  background: transparent;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--text-primary);
+  transition: background-color 0.2s ease-in-out;
+}
+
+.modal-close-btn:hover {
+  background: #e0e0e0;
+}
+
+#btn-close-settings-modal {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 10;
 }
 
 /* 계정 리스트 */
