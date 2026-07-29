@@ -279,9 +279,14 @@ if (toggleMinimizeOnClose) {
   });
 }
 
-// 글로벌 단축키 (Ctrl + P)
+// 단축키 핸들러 (F5: 타이틀바 새로고침, Ctrl + P: 항상 위 토글)
 document.addEventListener('keydown', (e) => {
-  if (e.ctrlKey && e.key.toLowerCase() === 'p') {
+  if (e.key === 'F5') {
+    e.preventDefault();
+    if (btnRefreshTitlebar) {
+      btnRefreshTitlebar.click();
+    }
+  } else if (e.ctrlKey && e.key.toLowerCase() === 'p') {
     e.preventDefault();
     if (toggleAlwaysOnTop) {
       const newState = !currentConfig.alwaysOnTop;

@@ -14,7 +14,7 @@ const translations = {
     // === 타이틀바 버튼 ===
     btn_launch_app: '안티그래비티 실행',
     btn_settings: '설정',
-    btn_refresh: '새로고침',
+    btn_refresh: '할당량 새로고침 (F5)',
     btn_minimize: '최소화',
     btn_close: '닫기',
     btn_close_settings_modal: '닫기 (Esc)',
@@ -144,7 +144,7 @@ const translations = {
     // === 타이틀바 버튼 ===
     btn_launch_app: 'Launch Antigravity',
     btn_settings: 'Settings',
-    btn_refresh: 'Refresh',
+    btn_refresh: 'Refresh Quota (F5)',
     btn_minimize: 'Minimize',
     btn_close: 'Close',
     btn_close_settings_modal: 'Close (Esc)',
