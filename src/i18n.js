@@ -17,6 +17,7 @@ const translations = {
     btn_refresh: '새로고침',
     btn_minimize: '최소화',
     btn_close: '닫기',
+    btn_close_settings_modal: '닫기 (Esc)',
 
     // === 메인 창 계정 카드 ===
     account_loading: '안티그래비티 계정을 불러오는 중입니다.',
@@ -85,7 +86,7 @@ const translations = {
     btn_account_switch: '전환',
     btn_account_restart: '재실행',
     btn_account_delete: '삭제',
-    btn_close_window: '닫기',
+    btn_close_window: '닫기 (Esc)',
     btn_clear_search: '검색어 지우기',
 
     // 정렬 메뉴
@@ -145,6 +146,7 @@ const translations = {
     btn_refresh: 'Refresh',
     btn_minimize: 'Minimize',
     btn_close: 'Close',
+    btn_close_settings_modal: 'Close (Esc)',
 
     // === 메인 창 계정 카드 ===
     account_loading: 'Loading Antigravity account...',
@@ -213,7 +215,7 @@ const translations = {
     btn_account_switch: 'Switch',
     btn_account_restart: 'Restart',
     btn_account_delete: 'Delete',
-    btn_close_window: 'Close',
+    btn_close_window: 'Close (Esc)',
     btn_clear_search: 'Clear search',
 
     // 정렬 메뉴
