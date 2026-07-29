@@ -154,17 +154,6 @@
           </div>
 
           <div class="settings-header" style="margin-top: 16px;">
-            <div style="display: flex; flex-direction: column; gap: 2px;">
-              <h3 data-i18n="settings_window_snapping_shortcuts">창 위치 스냅 단축키</h3>
-              <span style="font-size: 11px; color: var(--text-secondary);" data-i18n="settings_window_snapping_shortcuts_desc">(단축키: Alt+Shift+방향키)</span>
-            </div>
-            <label class="toggle-switch">
-              <input type="checkbox" id="toggle-window-snapping">
-              <span class="toggle-slider"></span>
-            </label>
-          </div>
-
-          <div class="settings-header" style="margin-top: 16px;">
             <h3 data-i18n="settings_run_at_startup">컴퓨터를 켤 때 자동으로 실행</h3>
             <label class="toggle-switch">
               <input type="checkbox" id="toggle-run-at-startup">
@@ -188,9 +177,23 @@
           </div>
 
           <div class="settings-header" style="margin-top: 16px;">
-            <h3 data-i18n="settings_window_snap">화면 가장자리에 창 스냅 (자석 효과)</h3>
+            <div style="display: flex; flex-direction: column; gap: 2px;">
+              <h3 data-i18n="settings_window_snap">화면 가장자리에 창 스냅</h3>
+              <span style="font-size: 11px; color: var(--text-secondary);" data-i18n="settings_window_snap_desc">화면 가장자리로 창을 이동하면 자석처럼 붙습니다.</span>
+            </div>
             <label class="toggle-switch">
               <input type="checkbox" id="toggle-window-snap" checked>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
+          <div class="settings-header" style="margin-top: 16px;">
+            <div style="display: flex; flex-direction: column; gap: 2px;">
+              <h3 data-i18n="settings_window_snapping_shortcuts">창 위치 스냅 단축키</h3>
+              <span style="font-size: 11px; color: var(--text-secondary);" data-i18n="settings_window_snapping_shortcuts_desc">(단축키: Alt+Shift+방향키)</span>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="toggle-window-snapping">
               <span class="toggle-slider"></span>
             </label>
           </div>
