@@ -44,9 +44,9 @@ const translations = {
     settings_start_minimized: '최소화된 상태로 실행',
     settings_window_snap: '화면 가장자리에 창 스냅 (자석 효과)',
     settings_minimize_on_close: '창 닫기 시 트레이로 최소화',
-    settings_enable_notifications: '알림 활성화',
+    settings_enable_notifications: '할당량 알림 활성화',
     settings_alert_threshold: '알림 임계값 설정',
-    settings_alert_threshold_desc: '선택된 모델의 남은 할당량이 설정값 이하로 내려가면 알림을 보냅니다.',
+    settings_alert_threshold_desc: '계정의 남은 할당량이 설정값 이하로 내려가면 알림을 보냅니다.',
 
     // === 업데이트 모달 ===
     update_title: '업데이트 알림',
@@ -172,9 +172,9 @@ const translations = {
     settings_start_minimized: 'Start Minimized',
     settings_window_snap: 'Snap to Screen Edges (Magnetic Effect)',
     settings_minimize_on_close: 'Minimize to Tray on Close',
-    settings_enable_notifications: 'Enable Notifications',
+    settings_enable_notifications: 'Enable Quota Alerts',
     settings_alert_threshold: 'Alert Threshold',
-    settings_alert_threshold_desc: 'Sends a notification when the remaining quota of a selected model drops below this value.',
+    settings_alert_threshold_desc: 'Sends a notification when the remaining quota of the account drops below this value.',
 
     // === 업데이트 모달 ===
     update_title: 'Update Available',
