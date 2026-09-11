@@ -37,6 +37,9 @@ let allAccountQuotas = {};
 let allAccountTiers = {};
 let selectedAccounts = new Set();
 
+// shared-utils.js에서 제공되는 공용 유틸리티
+const { getRefreshText, escapeHtml } = window.sharedUtils;
+
 function showSnackbar(message, type, isHtml = false) {
   if (isHtml) {
     snackbarMessage.innerHTML = message;
@@ -101,43 +104,7 @@ function getPctColorClass(percentage) {
   return 'pct-green';
 }
 
-function getRefreshText(quotaInfo) {
-  if (!quotaInfo) return '';
-  
-  let resetDate = null;
-  const resetStr = quotaInfo.quotaResetTime || quotaInfo.resetTime || quotaInfo.nextResetTime || quotaInfo.quotaResetTimestamp || quotaInfo.refreshTime;
-  
-  if (typeof resetStr === 'string') {
-    resetDate = new Date(resetStr);
-  } else if (typeof resetStr === 'number') {
-    resetDate = new Date(resetStr * 1000);
-  } else if (resetStr && resetStr.seconds) {
-    resetDate = new Date(resetStr.seconds * 1000);
-  } else if (quotaInfo.resetTime && quotaInfo.resetTime.seconds) {
-    resetDate = new Date(quotaInfo.resetTime.seconds * 1000);
-  } else if (quotaInfo.quotaResetTime && quotaInfo.quotaResetTime.seconds) {
-    resetDate = new Date(quotaInfo.quotaResetTime.seconds * 1000);
-  }
-  
-  if (!resetDate || isNaN(resetDate.getTime())) return '';
-  
-  const diffMs = resetDate - new Date();
-  if (diffMs <= 0) return 'soon';
-  
-  const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-  const hours = Math.floor((diffMs / (1000 * 60 * 60)) % 24);
-  const mins = Math.floor((diffMs / (1000 * 60)) % 60);
-  
-  if (days > 0) {
-    return `${days}d ${hours}h`;
-  } else if (hours > 0) {
-    return `${hours}h ${mins}m`;
-  } else if (mins > 0) {
-    return `${mins}m`;
-  } else {
-    return 'soon';
-  }
-}
+// getRefreshText는 shared-utils.js에서 제공
 
 async function loadAndRenderAccounts() {
   const accounts = await window.electronAPI.getAllAccounts();
@@ -395,21 +362,22 @@ async function handleAddAccount() {
   const result = await window.electronAPI.addAccount();
   
   if (result.success) {
+    const safeEmail = escapeHtml(result.account.email);
     if (result.alreadyExists) {
       showSnackbar(
-        `${result.account.email} ${t('accounts_already_exists')} <span class="switch-new-account-link" data-email="${result.account.email}" style="text-decoration: underline; cursor: pointer; margin-left: 10px; font-weight: 500;">${t('accounts_switch_now')}</span>`,
+        `${safeEmail} ${t('accounts_already_exists')} <span class="switch-new-account-link" data-email="${safeEmail}" style="text-decoration: underline; cursor: pointer; margin-left: 10px; font-weight: 500;">${t('accounts_switch_now')}</span>`,
         'warning',
         true
       );
     } else {
       showSnackbar(
-        `${result.account.email} ${t('accounts_added')} <span class="switch-new-account-link" data-email="${result.account.email}" style="text-decoration: underline; cursor: pointer; margin-left: 10px; font-weight: 500;">${t('accounts_switch_now')}</span>`,
+        `${safeEmail} ${t('accounts_added')} <span class="switch-new-account-link" data-email="${safeEmail}" style="text-decoration: underline; cursor: pointer; margin-left: 10px; font-weight: 500;">${t('accounts_switch_now')}</span>`,
         'success',
         true
       );
     }
     await loadAndRenderAccounts();
-    const newItem = modalAccountList.querySelector(`.account-item[data-email="${result.account.email}"]`);
+    const newItem = modalAccountList.querySelector(`.account-item[data-email="${CSS.escape(result.account.email)}"]`);
     if (newItem) {
       newItem.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }

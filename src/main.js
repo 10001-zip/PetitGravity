@@ -1,9 +1,10 @@
-const { app, BrowserWindow, Tray, Menu, ipcMain, Notification, shell, screen, dialog } = require('electron');
+const { app, BrowserWindow, Tray, Menu, ipcMain, Notification, shell, screen, dialog, safeStorage } = require('electron');
 const { autoUpdater } = require('electron-updater');
 const log = require('electron-log');
 const path = require('path');
 const fs = require('fs');
-const { exec } = require('child_process');
+const crypto = require('crypto');
+const { execFile, spawn } = require('child_process');
 const http = require('http');
 const { URL } = require('url');
 const i18n = require('./i18n');
@@ -27,8 +28,17 @@ let credentialCheckInterval;
 const configPath = path.join(app.getPath('userData'), 'config.json');
 
 // 기본 설정 데이터 구조
+const DEFAULT_GLOBAL_CONFIG = {
+  alertThreshold: 20,
+  alertModels: {},
+  enableNotifications: true,
+  enableWindowSnap: true,
+  enableSnapping: true,
+  checkInterval: 1
+};
+
 let config = {
-  global: { alertThreshold: 20, alertModels: {}, enableNotifications: true, enableWindowSnap: true, checkInterval: 1 },
+  global: { ...DEFAULT_GLOBAL_CONFIG },
   currentAccount: null, // "email"
 };
 
@@ -47,6 +57,8 @@ function loadConfig() {
   } catch (err) {
     console.error('설정 로딩 실패:', err);
   }
+  // config.global이 없거나 불완전할 경우 기본값으로 보완
+  config.global = { ...DEFAULT_GLOBAL_CONFIG, ...(config.global || {}) };
 }
 
 // 설정 저장
@@ -62,11 +74,53 @@ function saveConfig() {
 const accountsPath = path.join(app.getPath('userData'), 'accounts.json');
 let accounts = [];
 
+// safeStorage 암호화/복호화 헬퍼
+function encryptToken(plainText) {
+  if (!plainText) return plainText;
+  try {
+    if (safeStorage.isEncryptionAvailable()) {
+      const encrypted = safeStorage.encryptString(plainText);
+      return 'enc:' + encrypted.toString('base64');
+    }
+  } catch (err) {
+    console.error('토큰 암호화 실패:', err);
+  }
+  return plainText;
+}
+
+function decryptToken(value) {
+  if (!value || typeof value !== 'string' || !value.startsWith('enc:')) return value;
+  try {
+    const buffer = Buffer.from(value.substring(4), 'base64');
+    return safeStorage.decryptString(buffer);
+  } catch (err) {
+    console.error('토큰 복호화 실패:', err);
+    return value;
+  }
+}
+
 function loadAccounts() {
   try {
     if (fs.existsSync(accountsPath)) {
       const data = fs.readFileSync(accountsPath, 'utf8');
-      accounts = JSON.parse(data);
+      const raw = JSON.parse(data);
+      // 복호화하여 메모리에 로드
+      let needsMigration = false;
+      accounts = raw.map(a => {
+        const wasEncrypted = (a.refreshToken && a.refreshToken.startsWith('enc:')) ||
+                             (a.accessToken && a.accessToken.startsWith('enc:'));
+        const account = { ...a };
+        account.refreshToken = decryptToken(a.refreshToken);
+        account.accessToken = decryptToken(a.accessToken);
+        if (!wasEncrypted && (a.refreshToken || a.accessToken)) {
+          needsMigration = true;
+        }
+        return account;
+      });
+      // 기존 평문 토큰을 암호화 형태로 마이그레이션
+      if (needsMigration) {
+        saveAccounts();
+      }
     } else {
       accounts = [];
       saveAccounts();
@@ -79,7 +133,13 @@ function loadAccounts() {
 
 function saveAccounts() {
   try {
-    fs.writeFileSync(accountsPath, JSON.stringify(accounts, null, 2), 'utf8');
+    // 저장 시 토큰을 암호화
+    const toSave = accounts.map(a => ({
+      ...a,
+      refreshToken: encryptToken(a.refreshToken),
+      accessToken: encryptToken(a.accessToken),
+    }));
+    fs.writeFileSync(accountsPath, JSON.stringify(toSave, null, 2), 'utf8');
   } catch (err) {
     console.error('계정 목록 저장 실패:', err);
   }
@@ -201,9 +261,7 @@ function parsePseudoJson(str) {
 function readWindowsCredential() {
   return new Promise((resolve) => {
     const scriptPath = path.join(__dirname, 'helpers', 'read_cred.ps1').replace('app.asar', 'app.asar.unpacked');
-    // cmd/powershell에서 ps1 실행
-    const cmd = `powershell -NoProfile -ExecutionPolicy Bypass -File "${scriptPath}"`;
-    exec(cmd, (error, stdout, stderr) => {
+    execFile('powershell', ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', scriptPath], (error, stdout, stderr) => {
       if (error) {
         console.error('Credential 읽기 에러:', error, stderr);
         return resolve(null);
@@ -241,8 +299,7 @@ function writeWindowsCredential(payloadString) {
     const scriptPath = path.join(__dirname, 'helpers', 'write_cred.ps1').replace('app.asar', 'app.asar.unpacked');
     // base64 형태로 전달하여 특수문자나 인용부호 깨짐 방지
     const b64 = Buffer.from(payloadString).toString('base64');
-    const cmd = `powershell -NoProfile -ExecutionPolicy Bypass -File "${scriptPath}" -payloadB64 "${b64}"`;
-    exec(cmd, (error, stdout, stderr) => {
+    execFile('powershell', ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', scriptPath, '-payloadB64', b64], (error, stdout, stderr) => {
       if (error) {
         console.error('Credential 쓰기 에러:', error, stderr);
         return resolve(false);
@@ -286,6 +343,22 @@ async function refreshAccessToken(refreshToken) {
     console.error('토큰 갱신 API 오류:', err);
     return null;
   }
+}
+
+// 계정 객체의 토큰 만료 확인 및 자동 갱신 (공용)
+async function ensureFreshToken(account) {
+  if (!account.refreshToken) return account.accessToken;
+  const expiryTime = account.expiry ? new Date(account.expiry).getTime() : 0;
+  if (expiryTime - Date.now() < 10 * 60 * 1000) {
+    const refreshed = await refreshAccessToken(account.refreshToken);
+    if (refreshed) {
+      account.accessToken = refreshed.access_token;
+      account.expiry = new Date(Date.now() + (refreshed.expires_in * 1000)).toISOString();
+      saveAccounts();
+      return refreshed.access_token;
+    }
+  }
+  return account.accessToken;
 }
 
 // Google UserInfo 조회 (이메일 획득)
@@ -460,6 +533,7 @@ let lastCheckedAccessToken = '';
 let currentCachedEmail = '';
 let currentCachedProjectId = null;
 let currentCachedTier = null;
+let currentCachedModelQuotas = [];
 
 async function checkAndUpdateQuota() {
   try {
@@ -531,17 +605,6 @@ async function checkAndUpdateQuota() {
         currentCachedEmail = email;
         config.currentAccount = email;
 
-        // 글로벌 설정이 없다면 초기화
-        if (!config.global) {
-          config.global = {
-            alertThreshold: 20,
-            alertModels: {}, // { modelName: true }
-            enableNotifications: true,
-            enableWindowSnap: true
-          };
-          saveConfig();
-        }
-
         // Project ID 및 구독 티어 가져오기
         const projectResult = await fetchProjectId(accessToken);
         currentCachedProjectId = projectResult.projectId;
@@ -573,7 +636,7 @@ async function checkAndUpdateQuota() {
           email: currentCachedEmail,
           tier: currentCachedTier,
           quotas: [],
-          config: config.global || { alertThreshold: 20, alertModels: {} },
+          config: config.global,
           isAppRunning
         });
       }
@@ -582,7 +645,7 @@ async function checkAndUpdateQuota() {
     }
 
     // 화면 표시 및 모니터링 분석용 모델 리스트 구성
-    const accountConfig = config.global || { alertThreshold: 20, alertModels: {} };
+    const accountConfig = config.global;
     const threshold = accountConfig.alertThreshold;
 
     const { modelQuotas, modelsToAlert } = processModelsToGroups(models, threshold, currentCachedEmail, notifiedModels);
@@ -606,6 +669,7 @@ async function checkAndUpdateQuota() {
       });
     }
     
+    currentCachedModelQuotas = modelQuotas;
     updateTrayMenu(modelQuotas, currentCachedEmail);
   } catch (err) {
     console.error('checkAndUpdateQuota 에러 발생:', err);
@@ -614,7 +678,7 @@ async function checkAndUpdateQuota() {
         loggedIn: !!currentCachedEmail,
         email: currentCachedEmail || '에러 발생',
         quotas: [],
-        config: config.global || { alertThreshold: 20, alertModels: {}, enableWindowSnap: true },
+        config: config.global,
         isAppRunning: false // 에러 시 기본값
       });
     }
@@ -633,7 +697,7 @@ async function startOAuthFlow() {
     server.listen(0, '127.0.0.1', () => {
       const port = server.address().port;
       const redirectUri = `http://127.0.0.1:${port}/oauth-callback`;
-      const state = Math.random().toString(36).substring(2, 15);
+      const state = crypto.randomBytes(16).toString('hex');
       const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
         `client_id=${encodeURIComponent(CLIENT_ID)}` +
         `&redirect_uri=${encodeURIComponent(redirectUri)}` +
@@ -688,7 +752,7 @@ async function startOAuthFlow() {
 // === Antigravity 프로세스 관리 ===
 function findAntigravityProcesses() {
   return new Promise((resolve) => {
-    exec('tasklist /FO CSV /NH', (error, stdout) => {
+    execFile('tasklist', ['/FO', 'CSV', '/NH'], (error, stdout) => {
       if (error) { resolve([]); return; }
       const processes = [];
       const lines = stdout.trim().split('\n');
@@ -706,12 +770,34 @@ function findAntigravityProcesses() {
 async function killAntigravityProcesses() {
   const processes = await findAntigravityProcesses();
   if (processes.length === 0) return;
+
+  // 1단계: /F 없이 우아한 종료 신호 전송 (WM_CLOSE 등)
   for (const proc of processes) {
     await new Promise((resolve) => {
-      exec(`taskkill /PID ${proc.pid} /F /T`, () => resolve());
+      execFile('taskkill', ['/PID', String(proc.pid), '/T'], () => resolve());
     });
   }
-  await new Promise(resolve => setTimeout(resolve, 3000));
+
+  // 2단계: 최대 3초간 프로세스가 스스로 종료되길 대기
+  const gracePeriodMs = 3000;
+  const pollIntervalMs = 300;
+  const deadline = Date.now() + gracePeriodMs;
+  while (Date.now() < deadline) {
+    const remaining = await findAntigravityProcesses();
+    if (remaining.length === 0) break;
+    await new Promise(resolve => setTimeout(resolve, pollIntervalMs));
+  }
+
+  // 3단계: 아직 살아있는 프로세스만 강제 종료
+  const survivors = await findAntigravityProcesses();
+  for (const proc of survivors) {
+    await new Promise((resolve) => {
+      execFile('taskkill', ['/PID', String(proc.pid), '/F', '/T'], () => resolve());
+    });
+  }
+  if (survivors.length > 0) {
+    await new Promise(resolve => setTimeout(resolve, 1000));
+  }
 }
 
 async function restartAntigravityProcess() {
@@ -722,8 +808,8 @@ async function restartAntigravityProcess() {
   ];
   for (const exePath of possiblePaths) {
     if (fs.existsSync(exePath)) {
-      const child = exec(`"${exePath}"`, { detached: true, stdio: 'ignore' });
-      if (child.unref) child.unref();
+      const child = spawn(exePath, [], { detached: true, stdio: 'ignore' });
+      child.unref();
       console.log('Antigravity 재시작:', exePath);
       return;
     }
@@ -734,19 +820,7 @@ async function restartAntigravityProcess() {
 // === 단일 계정의 Quota 조회 (모달용) ===
 async function fetchQuotaForAccount(account) {
   try {
-    let accessToken = account.accessToken;
-    if (account.expiry && account.refreshToken) {
-      const expiryTime = new Date(account.expiry).getTime();
-      if (expiryTime - Date.now() < 10 * 60 * 1000) {
-        const refreshed = await refreshAccessToken(account.refreshToken);
-        if (refreshed) {
-          accessToken = refreshed.access_token;
-          account.accessToken = accessToken;
-          account.expiry = new Date(Date.now() + (refreshed.expires_in * 1000)).toISOString();
-          saveAccounts();
-        }
-      }
-    }
+    const accessToken = await ensureFreshToken(account);
     const projectResult = await fetchProjectId(accessToken);
     if (projectResult.tier) {
       account.tier = projectResult.tier;
@@ -755,7 +829,6 @@ async function fetchQuotaForAccount(account) {
     const models = await fetchQuotaData(accessToken, projectResult.projectId);
     const resolvedTier = projectResult.tier || account.tier || null;
     if (!models) return { email: account.email, tier: resolvedTier, quotas: [] };
-    const accountConfig = config.global || { alertThreshold: 20, alertModels: {} };
     const { modelQuotas } = processModelsToGroups(models);
     modelQuotas.sort((a, b) => b.displayName.localeCompare(a.displayName));
     return { email: account.email, tier: resolvedTier, quotas: modelQuotas };
@@ -820,7 +893,7 @@ function createWindow(startHidden = false) {
 
   // 창 이동 중 스냅(자석) 효과
   mainWindow.on('will-move', (event, newBounds) => {
-    const accountConfig = config.global || {};
+    const accountConfig = config.global;
     if (accountConfig.enableWindowSnap === false) return;
 
     const now = Date.now();
@@ -914,7 +987,7 @@ function createWindow(startHidden = false) {
   mainWindow.on('close', (event) => {
     saveWindowState();
     if (!isQuitting) {
-      const accountConfig = config.global || {};
+      const accountConfig = config.global;
       if (accountConfig.minimizeOnClose !== false) {
         event.preventDefault();
         mainWindow.hide();
@@ -1045,7 +1118,7 @@ function openAccountWindow() {
       nodeIntegration: false
     },
     frame: false,
-    alwaysOnTop: config.global.enableWindowSnap ? true : false,
+    alwaysOnTop: !!config.global.alwaysOnTop,
     resizable: true,
     show: false // Load first, then show
   });
@@ -1151,7 +1224,16 @@ const snapToCenter = (win, axis) => {
   win.setBounds({ x: Math.round(newX), y: Math.round(newY), width, height });
 };
 
+const SNAP_CHANNELS = [
+  'snap-top-left', 'snap-top-right', 'snap-bottom-left', 'snap-bottom-right',
+  'snap-left', 'snap-right', 'snap-top', 'snap-bottom',
+  'snap-center-x', 'snap-center-y'
+];
+
 function registerSnapHandlers(win) {
+  // 기존 리스너 제거 후 재등록 (중복 방지)
+  SNAP_CHANNELS.forEach(ch => ipcMain.removeAllListeners(ch));
+
   ipcMain.on('snap-top-left', () => snapToCorner(win, 'top-left'));
   ipcMain.on('snap-top-right', () => snapToCorner(win, 'top-right'));
   ipcMain.on('snap-bottom-left', () => snapToCorner(win, 'bottom-left'));
@@ -1167,12 +1249,13 @@ function registerSnapHandlers(win) {
 }
 
 // IPC 통신 이벤트 등록
+let ipcEventsRegistered = false;
 function registerIpcEvents() {
+  if (ipcEventsRegistered) return;
+  ipcEventsRegistered = true;
+
   // UI로부터 설정 변경 수신
   ipcMain.on('update-config', (event, { checkInterval, modelName, isMonitored, threshold, models, enableNotifications, alwaysOnTop, runAtStartup, startMinimized, enableWindowSnap, enableSnapping, minimizeOnClose, language }) => {
-    if (!config.global) {
-      config.global = { alertThreshold: 20, alertModels: {}, enableNotifications: true, enableWindowSnap: true, enableSnapping: true, checkInterval: 1 };
-    }
 
     const accountConfig = config.global;
 
@@ -1233,10 +1316,7 @@ function registerIpcEvents() {
     if (language !== undefined) {
       accountConfig.language = language;
       i18n.setLanguage(language);
-      updateTrayMenu(
-        (currentCachedEmail && lastCheckedAccessToken) ? [] : [],
-        currentCachedEmail || null
-      );
+      updateTrayMenu(currentCachedModelQuotas, currentCachedEmail || null);
     }
 
     if (models && Array.isArray(models)) {
@@ -1358,21 +1438,12 @@ function registerIpcEvents() {
           tier: currentCachedTier,
           quotas: [],
           isLoading: true,
-          config: config.global || { alertThreshold: 20, alertModels: {} },
+          config: config.global,
           isAppRunning: true
         });
       }
       
-      let accessToken = account.accessToken;
-      if (account.refreshToken) {
-        const refreshed = await refreshAccessToken(account.refreshToken);
-        if (refreshed) {
-          accessToken = refreshed.access_token;
-          account.accessToken = accessToken;
-          account.expiry = new Date(Date.now() + (refreshed.expires_in * 1000)).toISOString();
-          saveAccounts();
-        }
-      }
+      const accessToken = await ensureFreshToken(account);
       
       await killAntigravityProcesses();
       
@@ -1422,7 +1493,7 @@ function registerIpcEvents() {
 
   ipcMain.handle('get-language', () => i18n.getLanguage());
 
-  ipcMain.handle('get-config', () => config.global || {});
+  ipcMain.handle('get-config', () => config.global);
 
   ipcMain.on('install-update', () => {
     autoUpdater.quitAndInstall();
@@ -1456,7 +1527,6 @@ if (!gotTheLock) {
         const osLocale = app.getLocale() || '';
         const detectedLang = osLocale.startsWith('ko') ? 'ko' : 'en';
         i18n.setLanguage(detectedLang);
-        if (!config.global) config.global = { alertThreshold: 20, alertModels: {}, enableNotifications: true, enableWindowSnap: true };
         config.global.language = detectedLang;
         saveConfig();
       }
